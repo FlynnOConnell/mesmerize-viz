@@ -278,13 +278,13 @@ class CNMFVizContainer:
         return self._component_index
 
     @property
-    def plot_temporal(self) -> fpl.Plot:
-        """Plot with the single temporal trace"""
+    def plot_temporal(self) -> fpl.Figure:
+        """Figure with the single temporal trace"""
         return self._plot_temporal
 
     @property
-    def plot_heatmap(self) -> fpl.Plot:
-        """Plot with the heatmap"""
+    def plot_heatmap(self) -> fpl.Figure:
+        """Figure with the heatmap"""
         return self._plot_heatmap
 
     @property
@@ -565,9 +565,9 @@ class CNMFVizContainer:
         self._tab_contours_eval.titles = ["contour colors", "eval params"]
 
         # plots
-        self._plot_temporal = fpl.Plot(size=(500, 120))
+        self._plot_temporal = fpl.Figure(size=(500, 120))
         self._plot_temporal.camera.maintain_aspect = False
-        self._plot_heatmap = fpl.Plot(size=(500, 450))
+        self._plot_heatmap = fpl.Figure(size=(500, 450))
         self._plot_heatmap.camera.maintain_aspect = False
 
         self._image_widget: fpl.ImageWidget = None
@@ -723,7 +723,7 @@ class CNMFVizContainer:
                 **self.image_widget_kwargs
             )
 
-            self._image_widget.gridplot.renderer.add_event_handler(self._manual_toggle_component, "key_down")
+            self._image_widget.figure.renderer.add_event_handler(self._manual_toggle_component, "key_down")
 
             # need to start it here so that we can access the toolbar to link events with the slider
             self._image_widget.show()
@@ -739,7 +739,7 @@ class CNMFVizContainer:
             for g in self._image_widget.managed_graphics:
                 g.registered_callbacks.clear()
 
-            for subplot in self._image_widget.gridplot:
+            for subplot in self._image_widget.figure:
                 if "contours" in subplot:
                     # delete the contour graphics
                     subplot.delete_graphic(subplot["contours"])
@@ -757,7 +757,7 @@ class CNMFVizContainer:
         self._random_colors = np.random.rand(n_components, 4).astype(np.float32)
         self._random_colors[:, -1] = 1
 
-        for subplot in self._image_widget.gridplot:
+        for subplot in self._image_widget.figure:
             contour_graphic = subplot.add_line_collection(
                 contours,
                 colors=self._random_colors,
@@ -849,7 +849,7 @@ class CNMFVizContainer:
         self._component_metrics_text.value = metrics
 
     def _zoom_into_component(self, index: int):
-        for subplot in self._image_widget.gridplot:
+        for subplot in self._image_widget.figure:
             subplot.camera.show_object(
                 subplot["contours"].graphics[index].world_object,
                 scale=self.zoom_components_scale.value
@@ -905,11 +905,11 @@ class CNMFVizContainer:
 
         """
         cnmf_obj = self._cnmf_obj
-        n_contours = len(self._image_widget.gridplot[0, 0]["contours"])
+        n_contours = len(self._image_widget.figure[0, 0]["contours"])
 
         # use the random colors
         if metric == "random":
-            for subplot in self._image_widget.gridplot:
+            for subplot in self._image_widget.figure:
                 for i, g in enumerate(subplot["contours"].graphics):
                     g.colors = self._random_colors[i]
 
@@ -952,7 +952,7 @@ class CNMFVizContainer:
             else:
                 raise ValueError("Invalid colors value")
 
-        for subplot in self._image_widget.gridplot:
+        for subplot in self._image_widget.figure:
             # first initialize using a quantitative cmap
             # this ensures that setting cmap_values will work
             subplot["contours"].cmap = "gray"
@@ -1081,7 +1081,7 @@ class CNMFVizContainer:
 
         """
 
-        if self.image_widget.gridplot.canvas.__class__.__name__ == "JupyterWgpuCanvas":
+        if self.image_widget.figure.canvas.__class__.__name__ == "JupyterWgpuCanvas":
             temporals = VBox([self._plot_temporal.show(), self._plot_heatmap.show()])
             plots = HBox([temporals, self._image_widget.widget])
             self._widget = VBox([self._top_widget, plots, self._tab_contours_eval])
@@ -1092,7 +1092,7 @@ class CNMFVizContainer:
             else:
                 return self._widget
 
-        elif self.image_widget.gridplot.canvas.__class__.__name__ == "QWgpuCanvas":
+        elif self.image_widget.figure.canvas.__class__.__name__ == "QWgpuCanvas":
             self.plot_temporal.show()
             self.plot_heatmap.show()
             self.image_widget.show()

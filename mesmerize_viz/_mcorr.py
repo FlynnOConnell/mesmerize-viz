@@ -347,7 +347,7 @@ class McorrVizContainer:
 
         datagrid_params = HBox([self._datagrid, self._params_text_area])
 
-        if self._image_widget.gridplot.canvas.__class__.__name__ == "JupyterWgpuCanvas":
+        if self._image_widget.figure.canvas.__class__.__name__ == "JupyterWgpuCanvas":
             widget = VBox([
                     datagrid_params,
                     self._image_widget.show(sidecar=False),
@@ -355,7 +355,7 @@ class McorrVizContainer:
                 ])
 
             # TODO: remove monkeypatch once the autoscale bug is fixed in fastplotlib
-            self._image_widget.gridplot[0, 0].auto_scale()
+            self._image_widget.figure[0, 0].auto_scale()
 
             if not sidecar:
                 return widget
@@ -366,11 +366,11 @@ class McorrVizContainer:
             with self._sidecar:
                 return display(widget)
 
-        elif self._image_widget.gridplot.canvas.__class__.__name__ == "QWgpuCanvas":
+        elif self._image_widget.figure.canvas.__class__.__name__ == "QWgpuCanvas":
             # shown the image widget in Qt window
             self._image_widget.show()
             # TODO: remove monkeypatch once the autoscale bug is fixed in fastplotlib
-            self._image_widget.gridplot[0, 0].auto_scale(maintain_aspect=True)
+            self._image_widget.figure[0, 0].auto_scale(maintain_aspect=True)
             # return datagrid to show in jupyter
             return VBox([datagrid_params, self._slider_mean_window])
 

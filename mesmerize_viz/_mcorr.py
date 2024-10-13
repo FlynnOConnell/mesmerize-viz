@@ -178,7 +178,7 @@ class McorrVizContainer:
         default_iw_kwargs = {
             "window_funcs": {"t": (np.mean, 11)},
             "cmap": "gnuplot2",
-            "grid_plot_kwargs": {"size": (700, 600)},
+            "figure_kwargs": {"size": (700, 600)},
         }
 
         image_widget_kwargs = {

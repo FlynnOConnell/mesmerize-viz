@@ -450,7 +450,7 @@ class CNMFVizContainer:
 
         default_image_widget_kwargs = {
             "cmap": "gnuplot2",
-            "grid_plot_kwargs": {"size": (720, 602)},
+            "figure_kwargs": {"size": (720, 602)},
         }
 
         self.image_widget_kwargs = {
@@ -723,7 +723,7 @@ class CNMFVizContainer:
                 **self.image_widget_kwargs
             )
 
-            self._image_widget.figure.renderer.add_event_handler(self._manual_toggle_component, "key_down")
+            # self._image_widget.add_event_handler(self._manual_toggle_component, "key_down")
 
             # need to start it here so that we can access the toolbar to link events with the slider
             self._image_widget.show()
@@ -745,12 +745,12 @@ class CNMFVizContainer:
                     subplot.delete_graphic(subplot["contours"])
 
         # absolute garbage monkey patch which I will fix once we make ImageWidget emit its own events
-        if hasattr(self._image_widget.sliders["t"], "qslider"):
-            self._image_widget.sliders["t"].qslider.valueChanged.connect(
-                self._set_linear_selector_index_from_image_widget)
-        else:
-            # ipywidget
-            self._image_widget.sliders["t"].observe(self._set_linear_selector_index_from_image_widget, "value")
+        # if hasattr(self._image_widget.sliders["t"], "qslider"):
+        #     self._image_widget.sliders["t"].qslider.valueChanged.connect(
+        #         self._set_linear_selector_index_from_image_widget)
+        # else:
+        #     # ipywidget
+        #     self._image_widget.sliders["t"].observe(self._set_linear_selector_index_from_image_widget, "value")
 
         contours = data_arrays["contours"][0]
 
@@ -768,13 +768,13 @@ class CNMFVizContainer:
 
             image_graphic = subplot["image_widget_managed"]
 
-            image_graphic.link(
-                "click",
-                target=contour_graphic,
-                feature="thickness",
-                new_data=5,
-                callback=self._euclidean
-            )
+            # image_graphic.link(
+            #     "click",
+            #     target=contour_graphic,
+            #     feature="thickness",
+            #     new_data=5,
+            #     callback=self._euclidean
+            # )
 
             # contour_graphic.link("colors", target=contour_graphic, feature="thickness", new_data=2)
 
@@ -822,7 +822,7 @@ class CNMFVizContainer:
         for g in self._contour_graphics:
             g.set_feature(feature="thickness", new_data=8, indices=index)
 
-        self._plot_temporal["line"].data = self._temporal_data[index]
+        self._plot_temporal[0, 0]["line"].data = self._temporal_data[index]
 
         # set the component index property
         self._component_index = index

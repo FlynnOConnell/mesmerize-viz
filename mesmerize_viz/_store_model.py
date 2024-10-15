@@ -1,7 +1,7 @@
 from typing import *
+import numpy as np
 from fastplotlib import ImageGraphic, LinearSelector, ScatterGraphic
 from ipywidgets import IntSlider, FloatSlider
-from pynapple import TsdFrame, TsdTensor
 
 from fastplotlib.graphics._features import FeatureEvent
 
@@ -39,8 +39,10 @@ class TimeStoreComponent:
 
         # must have data if ImageGraphic
         if isinstance(self.subscriber, (ImageGraphic, ScatterGraphic)):
-            if not isinstance(data, (TsdFrame, TsdTensor)):
-                raise ValueError("If passing in `ImageGraphic` must provide associated `TsdFrame` to update data with.")
+            # may prefer to check for hasattr(var, 'shape'), to allow dask/zarr/other numpy-like objects
+            if not isinstance(data, np.ndarray):
+                raise ValueError("If passing in `ImageGraphic` must provide associated `ndarray` object to update "
+                                 "data with.")
             self._data = data
 
         self._data_filter = data_filter
@@ -77,7 +79,7 @@ class TimeStore:
 
     def subscribe(self,
                   subscriber: ImageGraphic | LinearSelector | ScatterGraphic | IntSlider | FloatSlider,
-                  data: TsdFrame | TsdTensor = None,
+                  data: np.ndarray = None,
                   data_filter: callable = None,
                   multiplier: int | float = None) -> None:
         """

@@ -3,11 +3,11 @@ from functools import partial
 from typing import *
 from warnings import warn
 
-
 import numpy as np
 import pandas as pd
 from ipydatagrid import DataGrid
-from ipywidgets import Button, Tab, Text, Textarea, Layout, HBox, VBox, Checkbox, FloatSlider, BoundedFloatText, IntSlider, BoundedIntText, RadioButtons, Dropdown, jslink
+from ipywidgets import Button, Tab, Text, Textarea, Layout, HBox, VBox, Checkbox, FloatSlider, BoundedFloatText, \
+    IntSlider, BoundedIntText, RadioButtons, Dropdown, jslink
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance, TimeSeriesScalerMinMax
 import fastplotlib as fpl
 from fastplotlib.utils import get_cmap
@@ -19,9 +19,7 @@ from mesmerize_core.caiman_extensions.cnmf import cnmf_cache
 from mesmerize_core import CNMFExtensions
 from ._store_model import TimeStore
 
-
 from ._utils import DummyMovie, format_params
-
 
 IMAGE_OPTIONS = [
     "input",
@@ -37,7 +35,6 @@ rcm_rcb_proj_options = list()
 for option in ["rcm", "rcb"]:
     for proj in ["mean", "min", "max", "std"]:
         rcm_rcb_proj_options.append(f"{option}-{proj}")
-
 
 IMAGE_OPTIONS += rcm_rcb_proj_options
 
@@ -299,16 +296,16 @@ class CNMFVizContainer:
         return self._cnmf_obj
 
     def __init__(
-        self,
-        dataframe: pd.DataFrame,
-        start_index: int = None,
-        temporal_data_option: str = None,
-        image_data_options: list[str] = None,
-        temporal_kwargs: dict = None,
-        reset_timepoint_on_change: bool = False,
-        input_movie_kwargs: dict = None,
-        image_widget_kwargs=None,
-        data_grid_kwargs: dict = None,
+            self,
+            dataframe: pd.DataFrame,
+            start_index: int = None,
+            temporal_data_option: str = None,
+            image_data_options: list[str] = None,
+            temporal_kwargs: dict = None,
+            reset_timepoint_on_change: bool = False,
+            input_movie_kwargs: dict = None,
+            image_widget_kwargs=None,
+            data_grid_kwargs: dict = None,
     ):
         """
         Visualize CNMF output and other data columns such as behavior video (optional).
@@ -567,9 +564,9 @@ class CNMFVizContainer:
 
         # plots
         self._plot_temporal = fpl.Figure(size=(500, 120))
-        self._plot_temporal[0,0].camera.maintain_aspect = False
+        self._plot_temporal[0, 0].camera.maintain_aspect = False
         self._plot_heatmap = fpl.Figure(size=(500, 450))
-        self._plot_heatmap[0,0].camera.maintain_aspect = False
+        self._plot_heatmap[0, 0].camera.maintain_aspect = False
 
         self._image_widget: fpl.ImageWidget = None
 
@@ -686,7 +683,7 @@ class CNMFVizContainer:
     def _set_data(self, data_arrays: Dict[str, np.ndarray]):
         self._contour_graphics.clear()
 
-        self._synchronizer.clear()
+        # self._synchronizer.clear()
 
         self._plot_temporal.clear()
         self._plot_heatmap.clear()
@@ -695,19 +692,20 @@ class CNMFVizContainer:
         self._temporal_data = data_arrays["temporal"]
 
         # make temporal graphics
-        self._plot_temporal.add_line(self._temporal_data[0], name="line")
+        self._plot_temporal[0, 0].add_line(self._temporal_data[0], name="line")
         # autoscale the single temporal line plot when the data changes
-        self._plot_temporal["line"].data.add_event_handler(self._plot_temporal.auto_scale)
-        self._plot_heatmap.add_heatmap(self._temporal_data, name="heatmap")
+        self._plot_temporal[0, 0]["line"].data.add_event_handler(self._plot_temporal[0, 0].auto_scale)
+        self._plot_heatmap[0, 0].add_image(self._temporal_data, name="heatmap")
 
-        self._component_linear_selector: fpl.LinearSelector = self._plot_heatmap["heatmap"].add_linear_selector(axis="y", thickness=5)
-        self._component_linear_selector.selection.add_event_handler(self.set_component_index)
+        self._component_linear_selector: fpl.LinearSelector = self._plot_heatmap[0, 0]['heatmap'].add_linear_selector(
+            axis="y", thickness=5)
+        self._component_linear_selector.add_event_handler(self.set_component_index, "selection")
 
         # linear selectors and events
-        self._linear_selector_temporal: fpl.LinearSelector = self._plot_temporal["line"].add_linear_selector()
-        self._linear_selector_temporal.selection.add_event_handler(self._set_frame_index_from_linear_selector)
+        self._linear_selector_temporal: fpl.LinearSelector = self._plot_temporal[0, 0]["line"].add_linear_selector()
+        self._linear_selector_temporal.add_event_handler(self._set_frame_index_from_linear_selector, "selection")
 
-        self._linear_selector_heatmap: fpl.LinearSelector = self._plot_heatmap["heatmap"].add_linear_selector()
+        self._linear_selector_heatmap: fpl.LinearSelector = self._plot_heatmap[0, 0]["heatmap"].add_linear_selector()
 
         # TODO: This is a temporary monkey patch until next release of fastplotlib
         self._component_linear_selector._initial_controller_state = True
@@ -715,8 +713,8 @@ class CNMFVizContainer:
         self._linear_selector_heatmap._initial_controller_state = True
 
         # sync the linear selectors
-        self._synchronizer.add(self._linear_selector_temporal)
-        self._synchronizer.add(self._linear_selector_heatmap)
+        # self._synchronizer.add(self._linear_selector_temporal)
+        # self._synchronizer.add(self._linear_selector_heatmap)
 
         if self._image_widget is None:
             self._image_widget = fpl.ImageWidget(
@@ -748,7 +746,8 @@ class CNMFVizContainer:
 
         # absolute garbage monkey patch which I will fix once we make ImageWidget emit its own events
         if hasattr(self._image_widget.sliders["t"], "qslider"):
-            self._image_widget.sliders["t"].qslider.valueChanged.connect(self._set_linear_selector_index_from_image_widget)
+            self._image_widget.sliders["t"].qslider.valueChanged.connect(
+                self._set_linear_selector_index_from_image_widget)
         else:
             # ipywidget
             self._image_widget.sliders["t"].observe(self._set_linear_selector_index_from_image_widget, "value")
@@ -983,7 +982,7 @@ class CNMFVizContainer:
         elif visible == "none":
             # make everything invisible
             contours[:].colors[:, -1] = 0
-            
+
         else:
             # make everything visible
             contours[:].colors[:, -1] = 1
@@ -1122,15 +1121,15 @@ class CNMFDataFrameVizExtension:
         self._dataframe = df
 
     def viz(
-        self,
-        start_index: int = None,
-        temporal_data_option: str = None,
-        image_data_options: list[str] = None,
-        temporal_kwargs: dict = None,
-        reset_timepoint_on_change: bool = False,
-        input_movie_kwargs: dict = None,
-        image_widget_kwargs: dict = None,
-        data_grid_kwargs: dict = None,
+            self,
+            start_index: int = None,
+            temporal_data_option: str = None,
+            image_data_options: list[str] = None,
+            temporal_kwargs: dict = None,
+            reset_timepoint_on_change: bool = False,
+            input_movie_kwargs: dict = None,
+            image_widget_kwargs: dict = None,
+            data_grid_kwargs: dict = None,
     ):
         """
         Visualize CNMF output and other data columns such as behavior video (optional).

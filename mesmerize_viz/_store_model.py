@@ -17,7 +17,7 @@ class TimeStoreComponent:
         return self._subscriber
 
     @property
-    def data(self) -> TsdFrame | TsdTensor | None:
+    def data(self) -> np.ndarray | None:
         return self._data
 
     @property
@@ -70,7 +70,7 @@ class TimeStore:
         fastplotlib.LinearSelector, or fastplotlob.ImageGraphic).
 
         NOTE: If passing a `fastplotlib.ImageGraphic`, it is understood that there should be an associated
-        `pynapple.TsdFrame` given.
+        `ndarray` given.
         """
         # initialize store
         self._store = list()
@@ -89,8 +89,8 @@ class TimeStore:
         ----------
         subscriber: fastplotlib.ImageGraphic, fastplotlib.LinearSelector, ipywidgets.IntSlider, or ipywidgets.FloatSlider
             ipywidget or fastplotlib object to be synchronized
-        data: pynapple.TsdFrame, optional
-            If subscriber is a fastplotlib.ImageGraphic, must have an associating pynapple.TsdFrame to update data with.
+        data: np.ndarray, optional
+            If subscriber is a fastplotlib.ImageGraphic, must have an associating numpy.ndarray to update data with.
         data_filter: callable, optional
             Function to apply to data before updating. Must return data in the same shape as input.
         multiplier: int | float, optional

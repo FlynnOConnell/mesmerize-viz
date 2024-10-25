@@ -4,7 +4,6 @@ from pathlib import Path
 
 install_requires = [
     "fastplotlib[notebook, imgui]",
-    "imgui_bundle",
     "ipydatagrid",
     "tslearn",
 ]

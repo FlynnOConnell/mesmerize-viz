@@ -69,7 +69,7 @@ class McorrVizContainer:
     def __init__(
         self,
             dataframe: pd.DataFrame,
-            data_options: List[str] = None,
+            image_data_options: List[str] = None,
             start_index: int = None,
             reset_timepoint_on_change: bool = False,
             input_movie_kwargs: dict = None,
@@ -81,7 +81,7 @@ class McorrVizContainer:
 
         Parameters
         ----------
-        data_options: list of str, default ["input", "mcorr", "mean", "corr"]
+        image_data_options: list of str, default ["input", "mcorr", "mean", "corr"]
             list of data to plot, valid options are:
 
             +-------------+-------------------------------------+
@@ -111,11 +111,11 @@ class McorrVizContainer:
         data_grid_kwargs: dict, optional
             kwargs passed to DataGrid()
         """
-        if data_options is None:
+        if image_data_options is None:
             # default viz
-            data_options = ["input", "mcorr", "mean", "corr"]
+            image_data_options = ["input", "mcorr", "mean", "corr"]
 
-        for d in data_options:
+        for d in image_data_options:
             if d not in VALID_DATA_OPTIONS:
                 raise KeyError(f"Invalid data option: \"{d}\", valid options are:"
                                f"\n{VALID_DATA_OPTIONS}")
@@ -166,7 +166,7 @@ class McorrVizContainer:
         )
 
         # data options is private since this can't be changed once an image widget has been made
-        self._data_options = data_options
+        self._image_data_options = image_data_options
 
         if input_movie_kwargs is None:
             input_movie_kwargs = dict()
@@ -217,7 +217,7 @@ class McorrVizContainer:
 
         self._image_widget = ImageWidget(
             data=data_arrays,
-            names=self._data_options,
+            names=self._image_data_options,
             **self.image_widget_kwargs
         )
 
@@ -260,7 +260,7 @@ class McorrVizContainer:
         size = mcorr.size
 
         # go through all data options user has chosen
-        for option in self._data_options:
+        for option in self._image_data_options:
             func = data_mapping[option]
 
             if option == "input":
@@ -395,7 +395,7 @@ class MCorrDataFrameVizExtension:
 
     def viz(
             self,
-            data_options: List[str] = None,
+            image_data_options: List[str] = None,
             start_index: int = 0,
             reset_timepoint_on_change: bool = False,
             input_movie_kwargs=None,
@@ -407,7 +407,7 @@ class MCorrDataFrameVizExtension:
 
         Parameters
         ----------
-        data_options: list of str, default ["input", "mcorr", "mean", "corr"]
+        image_data_options: list of str, default ["input", "mcorr", "mean", "corr"]
             list of data options to plot, valid options are:
 
             +-------------+-------------------------------------+
@@ -445,7 +445,7 @@ class MCorrDataFrameVizExtension:
 
         container = McorrVizContainer(
             dataframe=self._dataframe,
-            data_options=data_options,
+            image_data_options=image_data_options,
             start_index=start_index,
             reset_timepoint_on_change=reset_timepoint_on_change,
             input_movie_kwargs=input_movie_kwargs,

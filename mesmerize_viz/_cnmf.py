@@ -346,7 +346,8 @@ class CNMFVizContainer:
 
             Example: `image_widget_kwargs={"cmap": "viridis"}`
 
-        data_grid_kwargs
+        data_grid_kwargs: dict, optional
+             kwargs passed to DataGrid()
         """
 
         self._dataframe = dataframe

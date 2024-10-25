@@ -707,14 +707,12 @@ class CNMFVizContainer:
 
         self._linear_selector_heatmap: fpl.LinearSelector = self._plot_heatmap[0, 0]["heatmap"].add_linear_selector()
 
-        # TODO: This is a temporary monkey patch until next release of fastplotlib
-        self._component_linear_selector._initial_controller_state = True
-        self._linear_selector_temporal._initial_controller_state = True
-        self._linear_selector_heatmap._initial_controller_state = True
-
         # sync the linear selectors
         # self._synchronizer.add(self._linear_selector_temporal)
         # self._synchronizer.add(self._linear_selector_heatmap)
+        # WIP
+        self._time_store.subscribe(self._linear_selector_temporal, data=self._temporal_data)
+        self._time_store.subscribe(self._linear_selector_heatmap, data=self._temporal_data)
 
         if self._image_widget is None:
             self._image_widget = fpl.ImageWidget(
@@ -722,8 +720,9 @@ class CNMFVizContainer:
                 names=self._image_data_options,
                 **self.image_widget_kwargs
             )
-
-            # self._image_widget.add_event_handler(self._manual_toggle_component, "key_down")
+            for idx, graphic in enumerate(self._image_widget.managed_graphics):
+                graphic.add_event_handler(self._manual_toggle_component, "key_down")
+                self._time_store.subscribe(graphic, data=data_arrays["images"][idx])
 
             # need to start it here so that we can access the toolbar to link events with the slider
             self._image_widget.show()
@@ -766,6 +765,7 @@ class CNMFVizContainer:
             )
             self._contour_graphics.append(contour_graphic)
 
+            # WIP
             image_graphic = subplot["image_widget_managed"]
 
             # image_graphic.link(
@@ -1194,6 +1194,9 @@ class CNMFDataFrameVizExtension:
             kwargs passed to ImageWidget
 
             Example: `image_widget_kwargs={"cmap": "viridis"}`
+
+        data_grid_kwargs: dict
+            kwargs passed to ipywidgets.DataGrid()
         """
 
         container = CNMFVizContainer(

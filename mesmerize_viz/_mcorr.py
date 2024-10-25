@@ -106,7 +106,33 @@ class McorrVizContainer:
             kwargs passed to get_input_movie()
 
         image_widget_kwargs: dict, optional
-            kwargs passed to ImageWidget
+            Arguments passed to ImageWidget. Valid options are:
+
+            +-------------------+-----------------------------------------------------+
+            | Argument          | Description                                         |
+            +===================+=====================================================+
+            | data              | array-like or list of array-like data to display    |
+            +-------------------+-----------------------------------------------------+
+            | window_funcs      | dictionary of window functions for "t" or "z"       |
+            |                   | dimensions in format {"dim": (func, window_size)}   |
+            |                   | e.g., {"t": (np.mean, 11)}, {"z": (np.max, 3)}      |
+            +-------------------+-----------------------------------------------------+
+            | frame_apply       | function(s) applied to each data array to generate  |
+            |                   | final 2D image, can be callable or {idx: callable}  |
+            +-------------------+-----------------------------------------------------+
+            | figure_shape      | tuple for custom shape of the figure,               |
+            |                   | defaults to auto-estimation                         |
+            +-------------------+-----------------------------------------------------+
+            | figure_kwargs     | dictionary of arguments passed to GridPlot          |
+            +-------------------+-----------------------------------------------------+
+            | names             | optional list of names for subplots                 |
+            +-------------------+-----------------------------------------------------+
+            | histogram_widget  | boolean to create a histogram LUT widget per subplot|
+            +-------------------+-----------------------------------------------------+
+            | rgb               | boolean or list indicating if arrays are RGB(A)     |
+            +-------------------+-----------------------------------------------------+
+            | graphic_kwargs    | arguments passed to each ImageGraphic in subplots   |
+            +-------------------+-----------------------------------------------------+
 
         data_grid_kwargs: dict, optional
             kwargs passed to DataGrid()

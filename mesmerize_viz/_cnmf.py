@@ -308,46 +308,176 @@ class CNMFVizContainer:
             data_grid_kwargs: dict = None,
     ):
         """
-        Visualize CNMF output and other data columns such as behavior video (optional).
+        Visualize CNMF output and other data columns, such as behavior video (optional).
 
-        Note: If using dfof temporal_data_option, you must have already run dfof.
+        Note: If using `dfof` for `temporal_data_option`, you must have already run dfof.
 
         Parameters
         ----------
-        dataframe: pd.DataFrame
+        dataframe : pd.DataFrame
+            Input data to be visualized.
 
-        start_index: int
+        start_index : int
+            Start index for the initial data displayed in the visualization.
 
-        temporal_data_option: optional, str
-            if not provided or ``None`: uses cnmf.get_temporal()
+        temporal_data_option : str, optional
+            Defines the temporal data option to use:
 
-            if zscore: uses zscore of cnmf.get_temporal()
+            +------------------+--------------------------------------------------------------------------+
+            | Option           | Description                                                              |
+            +==================+==========================================================================+
+            | None             | Default. Uses `cnmf.get_temporal()`                                      |
+            +------------------+--------------------------------------------------------------------------+
+            | zscore           | Uses the z-score of `cnmf.get_temporal()`                                |
+            +------------------+--------------------------------------------------------------------------+
+            | norm             | Uses 0-1 normalized output of `cnmf.get_temporal()`                      |
+            +------------------+--------------------------------------------------------------------------+
+            | dfof             | Uses `cnmf.get_dfof()`                                                  |
+            +------------------+--------------------------------------------------------------------------+
+            | dfof-zscore      | Uses `cnmf.get_dfof()` and applies z-scoring                             |
+            +------------------+--------------------------------------------------------------------------+
+            | dfof-norm        | Uses `cnmf.get_dfof()` and applies 0-1 normalization                     |
+            +------------------+--------------------------------------------------------------------------+
 
-            if norm: uses 0-1 normalized output of cnmf.get_temporal()
+        reset_timepoint_on_change : bool, default False
+            If `True`, resets the timepoint in the ImageWidget when changing items/rows.
 
-            if dfof: uses cnmf.get_dfof()
+        temporal_kwargs : dict, optional
+            Additional keyword arguments passed to `cnmf.get_temporal()`. Ignored if `temporal_data_option` contains "dfof".
 
-            if dfof-zscore: uses cnmf.get_dfof() and then zscores
+            +-------------------+---------------------------------------------------------------+
+            | Argument          | Description                                                   |
+            +===================+===============================================================+
+            | component_indices | str or np.ndarray, optional                                   |
+            |                   | Specifies which components to include:                        |
+            |                   | - `None` or "all": includes all components                    |
+            |                   | - "good": uses good components (Estimates.idx_components)     |
+            |                   | - "bad": uses bad components (Estimates.idx_components_bad)   |
+            |                   | - np.ndarray: uses the specified indices                      |
+            +-------------------+---------------------------------------------------------------+
+            | add_background    | bool, default: False                                          |
+            |                   | If `True`, adds the temporal background (cnmf.estimates.f)    |
+            +-------------------+---------------------------------------------------------------+
+            | add_residuals     | bool, default: False                                          |
+            |                   | If `True`, adds residuals (cnmf.estimates.YrA)                |
+            +-------------------+---------------------------------------------------------------+
+            | return_copy       | bool                                                          |
+            |                   | If `True`, returns a copy of the cached value.                |
+            |                   | If `False`, returns the cached object directly (not           |
+            |                   | recommended, may cause unexpected behavior).                  |
+            +-------------------+---------------------------------------------------------------+
 
-            if dfof-norm: uses cnmf.get_dfof() and then 0-1 normalizes
+        input_movie_kwargs: dict, optional
+            Arguments passed to mesmerize_core.caiman.get_input_movie. Valid data options are:
 
-        reset_timepoint_on_change: bool, default False
-            reset the timepoint in the ImageWidget when changing items/rows
+            +----------+---------------------------------------------------------------+
+            | Argument | Description                                                   |
+            +==========+===============================================================+
+            | reader   | callable                                                      |
+            |          | Function to read the input movie path and return an array-like|
+            +----------+---------------------------------------------------------------+
+            | **kwargs | passed to reader function                                     |
+            +----------+---------------------------------------------------------------+
 
-        temporal_kwargs: dict
-            kwargs passed to cnmf.get_temporal(), example: {"add_residuals" : True}.
-            Ignored if temporal_data_option contains "dfof"
+            `mesmerize_core.get_input_movie() <https://mesmerize-core.readthedocs.io/en/latest/api/common.html#mesmerize_core.CaimanSeriesExtensions.get_input_movie>`_
 
-        input_movie_kwargs: dict
-            kwargs passed to caiman.get_input()
+        image_widget_kwargs : dict, optional
+            Arguments passed to ImageWidget. Valid options include:
 
-        image_widget_kwargs: dict
-            kwargs passed to ImageWidget
+            +-------------------+-----------------------------------------------------+
+            | Argument          | Description                                         |
+            +===================+=====================================================+
+            | data              | array-like or list of array-like data to display    |
+            +-------------------+-----------------------------------------------------+
+            | window_funcs      | dictionary of window functions for "t" or "z"       |
+            |                   | dimensions in format {"dim": (func, window_size)}   |
+            |                   | e.g., {"t": (np.mean, 11)}, {"z": (np.max, 3)}      |
+            +-------------------+-----------------------------------------------------+
+            | frame_apply       | function(s) applied to each data array to generate  |
+            |                   | final 2D image, can be callable or {idx: callable}  |
+            +-------------------+-----------------------------------------------------+
+            | figure_shape      | tuple for custom shape of the figure,               |
+            |                   | defaults to auto-estimation                         |
+            +-------------------+-----------------------------------------------------+
+            | figure_kwargs     | dictionary of arguments passed to GridPlot          |
+            +-------------------+-----------------------------------------------------+
+            | names             | optional list of names for subplots                 |
+            +-------------------+-----------------------------------------------------+
+            | histogram_widget  | boolean to create a histogram LUT widget per subplot|
+            +-------------------+-----------------------------------------------------+
+            | rgb               | boolean or list indicating if arrays are RGB(A)     |
+            +-------------------+-----------------------------------------------------+
+            | graphic_kwargs    | arguments passed to each ImageGraphic in subplots   |
+            +-------------------+-----------------------------------------------------+
 
             Example: `image_widget_kwargs={"cmap": "viridis"}`
 
-        data_grid_kwargs: dict, optional
-             kwargs passed to DataGrid()
+        data_grid_kwargs : dict, optional
+            Arguments passed to DataGrid. Valid options include:
+
+            +-------------------------+-----------------------------------------------------------+
+            | Argument                | Description                                               |
+            +=========================+===========================================================+
+            | base_row_size           | int, default: 20                                          |
+            |                         | Default row height                                        |
+            +-------------------------+-----------------------------------------------------------+
+            | base_column_size        | int, default: 64                                          |
+            |                         | Default column width                                      |
+            +-------------------------+-----------------------------------------------------------+
+            | base_row_header_size    | int, default: 64                                          |
+            |                         | Default row header width                                  |
+            +-------------------------+-----------------------------------------------------------+
+            | base_column_header_size | int, default: 20                                          |
+            |                         | Default column header height                              |
+            +-------------------------+-----------------------------------------------------------+
+            | header_visibility       | {'all', 'row', 'column', 'none'}, default: 'all'          |
+            |                         | Controls header visibility mode                           |
+            +-------------------------+-----------------------------------------------------------+
+            | dataframe               | pandas.DataFrame                                          |
+            |                         | Data displayed in the DataGrid                            |
+            +-------------------------+-----------------------------------------------------------+
+            | renderers               | dict                                                      |
+            |                         | Custom renderers for cells by column name                 |
+            +-------------------------+-----------------------------------------------------------+
+            | default_renderer        | CellRenderer, default: TextRenderer                       |
+            |                         | Default renderer for cell rendering                       |
+            +-------------------------+-----------------------------------------------------------+
+            | header_renderer         | CellRenderer, default: TextRenderer                       |
+            |                         | Renderer for header cells                                 |
+            +-------------------------+-----------------------------------------------------------+
+            | corner_renderer         | CellRenderer, default: TextRenderer                       |
+            |                         | Renderer for corner header cells                          |
+            +-------------------------+-----------------------------------------------------------+
+            | selection_mode          | {'row', 'column', 'cell', 'none'}, default: 'none'        |
+            |                         | Mode for cell selection by user or programmatically       |
+            +-------------------------+-----------------------------------------------------------+
+            | selections              | list of dict                                              |
+            |                         | Rectangular regions defined by row/column start & end     |
+            +-------------------------+-----------------------------------------------------------+
+            | editable                | bool, default: False                                      |
+            |                         | Enables direct cell editing                               |
+            +-------------------------+-----------------------------------------------------------+
+            | column_widths           | dict of {str: int}, default: {}                           |
+            |                         | Custom widths for columns by name                         |
+            +-------------------------+-----------------------------------------------------------+
+            | auto_fit_columns        | bool, default: False                                      |
+            |                         | Automatically adjust column widths                        |
+            +-------------------------+-----------------------------------------------------------+
+            | auto_fit_params         | dict                                                      |
+            |                         | Parameters for column auto-fitting                        |
+            +-------------------------+-----------------------------------------------------------+
+            | grid_style              | dict of {propertyName: str | VegaExpr | dict}             |
+            |                         | Global styling properties for the grid                    |
+            +-------------------------+-----------------------------------------------------------+
+            | index_name              | str, default: "key"                                       |
+            |                         | Name of the index column (set once at construction)       |
+            +-------------------------+-----------------------------------------------------------+
+            | horizontal_stripes      | bool, default: False                                      |
+            |                         | Themed coloring for alternate grid rows                   |
+            +-------------------------+-----------------------------------------------------------+
+            | vertical_stripes        | bool, default: False                                      |
+            |                         | Themed coloring for alternate grid columns                |
+            +-------------------------+-----------------------------------------------------------+
         """
 
         self._dataframe = dataframe

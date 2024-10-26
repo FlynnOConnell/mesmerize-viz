@@ -103,7 +103,18 @@ class McorrVizContainer:
             reset the timepoint in the ImageWidget when changing items/rows
 
         input_movie_kwargs: dict, optional
-            kwargs passed to get_input_movie()
+            Arguments passed to mesmerize_core.caiman.get_input_movie. Valid data options are:
+
+            +----------+---------------------------------------------------------------+
+            | Argument | Description                                                   |
+            +==========+===============================================================+
+            | reader   | callable                                                      |
+            |          | Function to read the input movie path and return an array-like|
+            +----------+---------------------------------------------------------------+
+            | **kwargs | passed to reader function                                     |
+            +----------+---------------------------------------------------------------+
+
+            `mesmerize_core.get_input_movie() <https://mesmerize-core.readthedocs.io/en/latest/api/common.html#mesmerize_core.CaimanSeriesExtensions.get_input_movie>`_
 
         image_widget_kwargs: dict, optional
             Arguments passed to ImageWidget. Valid options are:
@@ -134,8 +145,76 @@ class McorrVizContainer:
             | graphic_kwargs    | arguments passed to each ImageGraphic in subplots   |
             +-------------------+-----------------------------------------------------+
 
-        data_grid_kwargs: dict, optional
-            kwargs passed to DataGrid()
+            https://www.fastplotlib.org/ver/dev/api/widgets/ImageWidget_api/fastplotlib.ImageWidget.html#fastplotlib.ImageWidget
+
+        data_grid_kwargs : dict, optional
+            Arguments passed to DataGrid. Valid options are:
+
+            +-------------------------+-----------------------------------------------------------+
+            | Argument                | Description                                               |
+            +=========================+===========================================================+
+            | base_row_size           | int, default: 20                                          |
+            |                         | Default row height                                        |
+            +-------------------------+-----------------------------------------------------------+
+            | base_column_size        | int, default: 64                                          |
+            |                         | Default column width                                      |
+            +-------------------------+-----------------------------------------------------------+
+            | base_row_header_size    | int, default: 64                                          |
+            |                         | Default row header width                                  |
+            +-------------------------+-----------------------------------------------------------+
+            | base_column_header_size | int, default: 20                                          |
+            |                         | Default column header height                              |
+            +-------------------------+-----------------------------------------------------------+
+            | header_visibility       | {'all', 'row', 'column', 'none'}, default: 'all'          |
+            |                         | Controls header visibility mode                           |
+            +-------------------------+-----------------------------------------------------------+
+            | dataframe               | pandas.DataFrame                                          |
+            |                         | Data displayed in the DataGrid                            |
+            +-------------------------+-----------------------------------------------------------+
+            | renderers               | dict                                                      |
+            |                         | Custom renderers for cells by column name                 |
+            +-------------------------+-----------------------------------------------------------+
+            | default_renderer        | CellRenderer, default: TextRenderer                       |
+            |                         | Default renderer for cell rendering                       |
+            +-------------------------+-----------------------------------------------------------+
+            | header_renderer         | CellRenderer, default: TextRenderer                       |
+            |                         | Renderer for header cells                                 |
+            +-------------------------+-----------------------------------------------------------+
+            | corner_renderer         | CellRenderer, default: TextRenderer                       |
+            |                         | Renderer for corner header cells                          |
+            +-------------------------+-----------------------------------------------------------+
+            | selection_mode          | {'row', 'column', 'cell', 'none'}, default: 'none'        |
+            |                         | Mode for cell selection by user or programmatically       |
+            +-------------------------+-----------------------------------------------------------+
+            | selections              | list of dict                                              |
+            |                         | Rectangular regions defined by row/column start & end     |
+            +-------------------------+-----------------------------------------------------------+
+            | editable                | bool, default: False                                      |
+            |                         | Enables direct cell editing                               |
+            +-------------------------+-----------------------------------------------------------+
+            | column_widths           | dict of {str: int}, default: {}                           |
+            |                         | Custom widths for columns by name                         |
+            +-------------------------+-----------------------------------------------------------+
+            | auto_fit_columns        | bool, default: False                                      |
+            |                         | Automatically adjust column widths                        |
+            +-------------------------+-----------------------------------------------------------+
+            | auto_fit_params         | dict                                                      |
+            |                         | Parameters for column auto-fitting                        |
+            +-------------------------+-----------------------------------------------------------+
+            | grid_style              | dict of {propertyName: str | VegaExpr | dict}             |
+            |                         | Global styling properties for the grid                    |
+            +-------------------------+-----------------------------------------------------------+
+            | index_name              | str, default: "key"                                       |
+            |                         | Name of the index column (set once at construction)       |
+            +-------------------------+-----------------------------------------------------------+
+            | horizontal_stripes      | bool, default: False                                      |
+            |                         | Themed coloring for alternate grid rows                   |
+            +-------------------------+-----------------------------------------------------------+
+            | vertical_stripes        | bool, default: false                                      |
+            |                         | themed coloring for alternate grid columns                |
+            +-------------------------+-----------------------------------------------------------+
+
+            https://github.com/jupyter-widgets/ipydatagrid/blob/main/ipydatagrid/datagrid.py#L260
         """
         if image_data_options is None:
             # default viz

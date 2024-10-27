@@ -39,8 +39,8 @@ class TimeStoreComponent:
 
         # must have data if ImageGraphic
         if isinstance(self.subscriber, (ImageGraphic, ScatterGraphic)):
-            # may prefer to check for hasattr(var, 'shape'), to allow dask/zarr/other numpy-like objects
-            if not hasattr(data, '__array__'):
+            # LazyArrayRCM has no `__array__`, using `shape` for now
+            if not hasattr(data, 'shape'):
                 raise ValueError("If passing in `ImageGraphic` must provide associated `ndarray` object to update "
                                  "data with.")
             self._data = data

@@ -1,6 +1,6 @@
 from typing import *
 import numpy as np
-from fastplotlib import ImageGraphic, LinearSelector, ScatterGraphic
+from fastplotlib import ImageGraphic, LinearSelector, ScatterGraphic, ImageWidget
 from ipywidgets import IntSlider, FloatSlider
 
 from fastplotlib.graphics._features import FeatureEvent
@@ -57,7 +57,7 @@ class TimeStore:
     @time.setter
     def time(self, value: int | float):
         """Set the current time."""
-        self._time = value
+        self._time = int(value)
 
     @property
     def store(self) -> List[TimeStoreComponent]:
@@ -106,6 +106,10 @@ class TimeStore:
         self._store.append(component)
 
         # add event handler to component.subscriber to call update_store
+        if isinstance(component.subscriber, ImageWidget):
+            component.subscriber.add_event_handler(self._update_store, "current_index")
+            # for graphic in component.subscriber.managed_graphics:
+            #     graphic.add_event_handler(self._update_store, "selection")
         if isinstance(component.subscriber, (IntSlider, FloatSlider)):
             component.subscriber.observe(self._update_store, "value")
         if isinstance(component.subscriber, LinearSelector):
@@ -137,13 +141,15 @@ class TimeStore:
 
         for component in self.store:
             # update ImageGraphic data no matter what
-            if isinstance(component.subscriber, ScatterGraphic):
-                component.subscriber.data = component.data.get(self.time)
+            if isinstance(component.subscriber, ImageWidget):
+                component.subscriber.current_index= {'t': self.time}
+            elif isinstance(component.subscriber, ScatterGraphic):
+                component.subscriber.data = component.data[self.time]
             elif isinstance(component.subscriber, ImageGraphic):
                 if component.data_filter is None:
-                    new_data = component.data.get(self.time)
+                    new_data = component.data[self.time]
                 else:
-                    new_data = component.data_filter(component.data.get(self.time))
+                    new_data = component.data_filter(component.data[self.time])
                 if new_data.shape != component.subscriber.data.value.shape:
                     raise ValueError(f"data filter function: {component.data_filter} must return data in the same shape"
                                      f"as the current data")

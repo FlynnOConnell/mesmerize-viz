@@ -136,13 +136,18 @@ class TimeStore:
                 if isinstance(component.subscriber, LinearSelector):
                     if ev.graphic == component.subscriber:
                         self.time = ev.info["value"] / component.multiplier
+        elif isinstance(ev, dict):
+            self.time = ev["t"]
         else:
             self.time = ev["new"]
 
         for component in self.store:
             # update ImageGraphic data no matter what
             if isinstance(component.subscriber, ImageWidget):
-                component.subscriber.current_index= {'t': self.time}
+                pass
+            #     # this is printing 3x, indicating update_store is being called 3x, probaably bad
+            #     print(self.time)
+                # component.subscriber.current_index= {'t': self.time}
             elif isinstance(component.subscriber, ScatterGraphic):
                 component.subscriber.data = component.data[self.time]
             elif isinstance(component.subscriber, ImageGraphic):

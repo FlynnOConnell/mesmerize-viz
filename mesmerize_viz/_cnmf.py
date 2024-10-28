@@ -814,8 +814,6 @@ class CNMFVizContainer:
     def _set_data(self, data_arrays: Dict[str, np.ndarray]):
         self._contour_graphics.clear()
 
-        # self._synchronizer.clear()
-
         self._plot_temporal.clear()
         self._plot_heatmap.clear()
 
@@ -825,7 +823,7 @@ class CNMFVizContainer:
         # make temporal graphics
         self._plot_temporal[0, 0].add_line(self._temporal_data[0], name="line")
         # autoscale the single temporal line plot when the data changes
-        self._plot_temporal[0, 0]["line"].data.add_event_handler(self._plot_temporal[0, 0].auto_scale)
+        self._plot_temporal[0, 0]["line"].add_event_handler(self._plot_temporal[0, 0].auto_scale, 'data')
         self._plot_heatmap[0, 0].add_image(self._temporal_data, name="heatmap")
 
         self._component_linear_selector: fpl.LinearSelector = self._plot_heatmap[0, 0]['heatmap'].add_linear_selector(
@@ -834,16 +832,11 @@ class CNMFVizContainer:
 
         # linear selectors and events
         self._linear_selector_temporal: fpl.LinearSelector = self._plot_temporal[0, 0]["line"].add_linear_selector()
-        self._linear_selector_temporal.add_event_handler(self._set_frame_index_from_linear_selector, "selection")
+        self._time_store.subscribe(self._linear_selector_temporal,)
+        # self._linear_selector_temporal.add_event_handler(self._set_frame_index_from_linear_selector, "selection")
 
         self._linear_selector_heatmap: fpl.LinearSelector = self._plot_heatmap[0, 0]["heatmap"].add_linear_selector()
-
-        # sync the linear selectors
-        # self._synchronizer.add(self._linear_selector_temporal)
-        # self._synchronizer.add(self._linear_selector_heatmap)
-        # WIP
-        self._time_store.subscribe(self._linear_selector_temporal, data=self._temporal_data)
-        self._time_store.subscribe(self._linear_selector_heatmap, data=self._temporal_data)
+        self._time_store.subscribe(self._linear_selector_heatmap,)
 
         if self._image_widget is None:
             self._image_widget = fpl.ImageWidget(
@@ -851,9 +844,12 @@ class CNMFVizContainer:
                 names=self._image_data_options,
                 **self.image_widget_kwargs
             )
-            for idx, graphic in enumerate(self._image_widget.managed_graphics):
-                graphic.add_event_handler(self._manual_toggle_component, "key_down")
-                self._time_store.subscribe(graphic, data=data_arrays["images"][idx])
+            # this is being funky
+            self._time_store.subscribe(self._image_widget)
+            # for idx, graphic in enumerate(self._image_widget.managed_graphics):
+            #     graphic.add_event_handler(self._manual_toggle_component, "key_down")
+            #     # match video frames to the selected temporal data
+            #     self._time_store.subscribe(graphic, data=data_arrays["images"][idx])
 
             # need to start it here so that we can access the toolbar to link events with the slider
             self._image_widget.show()

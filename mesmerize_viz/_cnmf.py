@@ -938,16 +938,17 @@ class CNMFVizContainer:
         return None
 
     def set_component_index(self, index):
-        if hasattr(index, "pick_info"):
+        if hasattr(index, "info"):
             # came from heatmap component selector
-            if index.pick_info["pygfx_event"] is None:
-                # this means that the selector was not triggered by the user but that it moved due to another event
-                # so then we don't set_component_index because then infinite recursion
-                return
-            index = index.pick_info["selected_index"]
+            # if index.info["pygfx_event"] is None:
+            #     # this means that the selector was not triggered by the user but that it moved due to another event
+            #     # so then we don't set_component_index because then infinite recursion
+            #     return
+            index = int(index.info["value"])
 
         for g in self._contour_graphics:
-            g.set_feature(feature="thickness", new_data=8, indices=index)
+            g.thickness[index] = 8
+            # g.set_feature(feature="thickness", new_data=8, indices=index)
 
         self._plot_temporal[0, 0]["line"].data = self._temporal_data[index]
 

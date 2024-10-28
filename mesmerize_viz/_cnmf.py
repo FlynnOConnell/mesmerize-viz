@@ -947,14 +947,8 @@ class CNMFVizContainer:
             index = int(index.info["value"])
 
         for g in self._contour_graphics:
-
             g.thickness[index] = 8
-            # g.set_feature(feature="thickness", new_data=8, indices=index)
-
-        try:
-            self._plot_temporal[0, 0]["line"].data[:, 1] = self._temporal_data[index]
-        except ValueError:
-            x = 2
+        self._plot_temporal[0, 0]["line"].data[:, 1] = self._temporal_data[index]
 
         # set the component index property
         self._component_index = index

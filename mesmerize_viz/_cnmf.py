@@ -832,11 +832,12 @@ class CNMFVizContainer:
 
         # linear selectors and events
         self._linear_selector_temporal: fpl.LinearSelector = self._plot_temporal[0, 0]["line"].add_linear_selector()
-        self._time_store.subscribe(self._linear_selector_temporal,)
-        # self._linear_selector_temporal.add_event_handler(self._set_frame_index_from_linear_selector, "selection")
-
         self._linear_selector_heatmap: fpl.LinearSelector = self._plot_heatmap[0, 0]["heatmap"].add_linear_selector()
+
+        self._time_store.subscribe(self._linear_selector_temporal,)
         self._time_store.subscribe(self._linear_selector_heatmap,)
+        # self._linear_selector_temporal.add_event_handler(self._set_frame_index_from_linear_selector, "selection")
+        # self._linear_selector_heatmap.add_event_handler(self._set_frame_index_from_linear_selector, "selection")
 
         if self._image_widget is None:
             self._image_widget = fpl.ImageWidget(
@@ -844,8 +845,9 @@ class CNMFVizContainer:
                 names=self._image_data_options,
                 **self.image_widget_kwargs
             )
+            self._image_widget.add_event_handler(self._set_linear_selector_index_from_image_widget,)
             # this is being funky
-            self._time_store.subscribe(self._image_widget)
+            # self._time_store.subscribe(self._image_widget)
             # for idx, graphic in enumerate(self._image_widget.managed_graphics):
             #     graphic.add_event_handler(self._manual_toggle_component, "key_down")
             #     # match video frames to the selected temporal data
@@ -870,13 +872,6 @@ class CNMFVizContainer:
                     # delete the contour graphics
                     subplot.delete_graphic(subplot["contours"])
 
-        # absolute garbage monkey patch which I will fix once we make ImageWidget emit its own events
-        # if hasattr(self._image_widget.sliders["t"], "qslider"):
-        #     self._image_widget.sliders["t"].qslider.valueChanged.connect(
-        #         self._set_linear_selector_index_from_image_widget)
-        # else:
-        #     # ipywidget
-        #     self._image_widget.sliders["t"].observe(self._set_linear_selector_index_from_image_widget, "value")
 
         contours = data_arrays["contours"][0]
 
@@ -986,15 +981,16 @@ class CNMFVizContainer:
         self._zoom_into_component(self.component_index)
 
     def _set_frame_index_from_linear_selector(self, ev):
-        # TODO: hacky mess, need to make ImageWidget emit events
-        ix = ev.pick_info["selected_index"]
-        self._image_widget.sliders["t"].value = ix
+        if isinstance(ev, dict):
+            ix = ev["t"]
+        self._linear_selector_temporal.selection = ix
+        self._linear_selector_heatmap.selection = ix
 
     def _set_linear_selector_index_from_image_widget(self, ev):
         if isinstance(ev, dict):
             # ipywidget
-            ix = ev["new"]
-
+            # do we still need ev['new'] checks?
+            ix = ev["t"]
         # else it's directly from Qt slider
         else:
             ix = ev

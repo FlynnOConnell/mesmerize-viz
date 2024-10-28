@@ -44,7 +44,6 @@ class TimeStoreComponent:
                 raise ValueError("If passing in `ImageGraphic` must provide associated `ndarray` object to update "
                                  "data with.")
             self._data = data
-
         self._data_filter = data_filter
 
 
@@ -105,11 +104,8 @@ class TimeStore:
         # add component to the store
         self._store.append(component)
 
-        # add event handler to component.subscriber to call update_store
         if isinstance(component.subscriber, ImageWidget):
             component.subscriber.add_event_handler(self._update_store, "current_index")
-            # for graphic in component.subscriber.managed_graphics:
-            #     graphic.add_event_handler(self._update_store, "selection")
         if isinstance(component.subscriber, (IntSlider, FloatSlider)):
             component.subscriber.observe(self._update_store, "value")
         if isinstance(component.subscriber, LinearSelector):

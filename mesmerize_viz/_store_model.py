@@ -140,18 +140,15 @@ class TimeStore:
         print('Iterating components')
         for component in self.store:
             print('Component 1')
-            # update ImageGraphic data no matter what
             if isinstance(component.subscriber, ImageWidget):
-                print('Is ImageWidget')
                 # user moved qslider, don't update imagewidget
                 if isinstance(ev, dict) and 't' in ev:
-                    print('Is ImageWidget and ev.graphic == component.subscriber')
                     pass
                 else:
-                    print('Is ImageWidget and ev.graphic != component.subscriber')
                     component.subscriber.current_index = {"t": self.time}
             elif isinstance(component.subscriber, ScatterGraphic):
                 component.subscriber.data = component.data[self.time]
+            # update ImageGraphic data no matter what
             elif isinstance(component.subscriber, ImageGraphic):
                 if component.data_filter is None:
                     new_data = component.data[self.time]
@@ -162,7 +159,6 @@ class TimeStore:
                                      f"as the current data")
                 component.subscriber.data = new_data
             elif isinstance(component.subscriber, LinearSelector):
-                print('Is LinearSelector')
                 # only update if different
                 if abs(component.subscriber.selection - (self.time * component.multiplier)) > MARGIN:
                     print('Is LinearSelector and abs(component.subscriber.selection - (self.time * '
@@ -170,6 +166,5 @@ class TimeStore:
                     component.subscriber.selection = self.time * component.multiplier
             else:
                 # only update if different
-                print('Is IntSlider or FloatSlider')
                 if abs(component.subscriber.value - self.time) > MARGIN:
                     component.subscriber.value = self.time

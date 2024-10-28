@@ -882,16 +882,7 @@ class CNMFVizContainer:
 
             # WIP
             image_graphic = subplot["image_widget_managed"]
-
-            # image_graphic.link(
-            #     "click",
-            #     target=contour_graphic,
-            #     feature="thickness",
-            #     new_data=5,
-            #     callback=self._euclidean
-            # )
-
-            # contour_graphic.link("colors", target=contour_graphic, feature="thickness", new_data=2)
+            contour_graphic.add_event_handler(self.click_event, "click")
 
         self.component_int_box.value = 0
         self.component_slider.value = 0
@@ -904,10 +895,19 @@ class CNMFVizContainer:
 
         self._eval_controller.set_limits(self._cnmf_obj)
 
-    def _euclidean(self, source, target, event, new_data):
+    def click_event(self, ev):
+        # TODO: Click event should be relative to the clicked image, not the contour
+        for subplot in self._image_widget.figure:
+            contour = subplot["contours"]
+            xy = subplot.map_screen_to_world(ev)[:-1]
+            nearest = fpl.utils.get_nearest_graphics(xy, contour)[0]
+            nearest.colors = "w"
+
+    def _euclidean(self, target, event,):
         """maps click events to contour"""
         # calculate coms of line collection
-        indices = np.array(event.pick_info["index"])
+        ix = event.get_selected_index()
+        indices = np.array(event.info["index"])
 
         coms = list()
 
@@ -1181,7 +1181,7 @@ class CNMFVizContainer:
 
         if self.image_widget.figure.canvas.__class__.__name__ == "JupyterWgpuCanvas":
             temporals = VBox([self._plot_temporal.show(), self._plot_heatmap.show()])
-            plots = HBox([temporals, self._image_widget.widget])
+            plots = HBox([temporals, self._image_widget.show()])
             self._widget = VBox([self._top_widget, plots, self._tab_contours_eval])
             if sidecar:
                 self._sidecar = Sidecar()

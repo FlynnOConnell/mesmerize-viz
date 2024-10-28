@@ -819,13 +819,14 @@ class CNMFVizContainer:
 
         # make our temporal plots first, else image widget slider events could trigger linear selectors
         self._temporal_data = data_arrays["temporal"]
-
-        # make temporal graphics
         self._plot_temporal[0, 0].add_line(self._temporal_data[0], name="line")
-        # autoscale the single temporal line plot when the data changes
-        self._plot_temporal[0, 0]["line"].add_event_handler(self._plot_temporal[0, 0].auto_scale, 'data')
-        self._plot_heatmap[0, 0].add_image(self._temporal_data, name="heatmap")
 
+        # autoscale the single temporal line plot when the data changes
+        self._plot_temporal[0, 0]["line"].add_event_handler(self._plot_temporal[0, 0].auto_scale)
+        self._plot_heatmap[0, 0].add_image(self._temporal_data, name="heatmap",)
+        self._plot_heatmap[0, 0]['heatmap'].add_event_handler(self._plot_heatmap[0, 0].auto_scale)
+
+        # component selectors
         self._component_linear_selector: fpl.LinearSelector = self._plot_heatmap[0, 0]['heatmap'].add_linear_selector(
             axis="y", thickness=5)
         self._component_linear_selector.add_event_handler(self.set_component_index, "selection")
@@ -836,8 +837,6 @@ class CNMFVizContainer:
 
         self._time_store.subscribe(self._linear_selector_temporal,)
         self._time_store.subscribe(self._linear_selector_heatmap,)
-        # self._linear_selector_temporal.add_event_handler(self._set_frame_index_from_linear_selector, "selection")
-        # self._linear_selector_heatmap.add_event_handler(self._set_frame_index_from_linear_selector, "selection")
 
         if self._image_widget is None:
             self._image_widget = fpl.ImageWidget(
@@ -845,13 +844,7 @@ class CNMFVizContainer:
                 names=self._image_data_options,
                 **self.image_widget_kwargs
             )
-            self._image_widget.add_event_handler(self._set_linear_selector_index_from_image_widget,)
-            # this is being funky
-            # self._time_store.subscribe(self._image_widget)
-            # for idx, graphic in enumerate(self._image_widget.managed_graphics):
-            #     graphic.add_event_handler(self._manual_toggle_component, "key_down")
-            #     # match video frames to the selected temporal data
-            #     self._time_store.subscribe(graphic, data=data_arrays["images"][idx])
+            self._time_store.subscribe(self._image_widget, )
 
             # need to start it here so that we can access the toolbar to link events with the slider
             self._image_widget.show()
@@ -979,24 +972,6 @@ class CNMFVizContainer:
 
     def _center_on_component(self, obj):
         self._zoom_into_component(self.component_index)
-
-    def _set_frame_index_from_linear_selector(self, ev):
-        if isinstance(ev, dict):
-            ix = ev["t"]
-        self._linear_selector_temporal.selection = ix
-        self._linear_selector_heatmap.selection = ix
-
-    def _set_linear_selector_index_from_image_widget(self, ev):
-        if isinstance(ev, dict):
-            # ipywidget
-            # do we still need ev['new'] checks?
-            ix = ev["t"]
-        # else it's directly from Qt slider
-        else:
-            ix = ev
-
-        self._linear_selector_temporal.selection = ix
-        self._linear_selector_heatmap.selection = ix
 
     def _ipywidget_set_component_colors(self, *args):
         """just a wrapper to make ipywidgets happy"""

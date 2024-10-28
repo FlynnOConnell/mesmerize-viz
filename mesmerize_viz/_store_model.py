@@ -77,7 +77,7 @@ class TimeStore:
         self._time = 0
 
     def subscribe(self,
-                  subscriber: ImageGraphic | LinearSelector | ScatterGraphic | IntSlider | FloatSlider,
+                  subscriber: ImageWidget | ImageGraphic | LinearSelector | ScatterGraphic | IntSlider | FloatSlider,
                   data: np.ndarray = None,
                   data_filter: callable = None,
                   multiplier: int | float = None) -> None:
@@ -137,13 +137,19 @@ class TimeStore:
         else:
             self.time = ev["new"]
 
+        print('Iterating components')
         for component in self.store:
+            print('Component 1')
             # update ImageGraphic data no matter what
             if isinstance(component.subscriber, ImageWidget):
-                pass
-            #     # this is printing 3x, indicating update_store is being called 3x, probaably bad
-            #     print(self.time)
-                # component.subscriber.current_index= {'t': self.time}
+                print('Is ImageWidget')
+                # user moved qslider, don't update imagewidget
+                if isinstance(ev, dict) and 't' in ev:
+                    print('Is ImageWidget and ev.graphic == component.subscriber')
+                    pass
+                else:
+                    print('Is ImageWidget and ev.graphic != component.subscriber')
+                    component.subscriber.current_index = {"t": self.time}
             elif isinstance(component.subscriber, ScatterGraphic):
                 component.subscriber.data = component.data[self.time]
             elif isinstance(component.subscriber, ImageGraphic):
@@ -156,10 +162,14 @@ class TimeStore:
                                      f"as the current data")
                 component.subscriber.data = new_data
             elif isinstance(component.subscriber, LinearSelector):
+                print('Is LinearSelector')
                 # only update if different
                 if abs(component.subscriber.selection - (self.time * component.multiplier)) > MARGIN:
+                    print('Is LinearSelector and abs(component.subscriber.selection - (self.time * '
+                          'component.multiplier)) > MARGIN')
                     component.subscriber.selection = self.time * component.multiplier
             else:
                 # only update if different
+                print('Is IntSlider or FloatSlider')
                 if abs(component.subscriber.value - self.time) > MARGIN:
                     component.subscriber.value = self.time

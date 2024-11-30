@@ -74,24 +74,3 @@ class ComponentStore:
         if subscriber in self.subscribers:
             self.subscribers.remove(subscriber)
 
-
-# Example usage
-if __name__ == "__main__":
-    from fastplotlib import ImageWidget
-    from ipywidgets import IntSlider, BoundedIntText, HBox
-
-
-    time_store = TimeStore()
-    component_store = ComponentStore(time_store)
-
-    # Example IntSlider and BoundedIntText
-    slider = IntSlider(min=0, max=10, value=0, description="Component Index")
-    spinbox = BoundedIntText(min=0, max=10, value=0, layout={"width": "70px"})
-
-    # Link them to the ComponentStore
-    component_store.add_subscriber(slider)
-    component_store.add_subscriber(spinbox)
-
-    # Display widgets for testing
-    display(HBox([slider, spinbox]))
-

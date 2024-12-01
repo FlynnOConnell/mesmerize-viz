@@ -17,8 +17,9 @@ from sidecar import Sidecar
 
 from mesmerize_core.caiman_extensions.cnmf import cnmf_cache
 from mesmerize_core import CNMFExtensions
-from ._store_model import TimeStore
 
+from ._store_model import TimeStore
+from ._component_store import ComponentStore
 from ._utils import DummyMovie, format_params
 
 IMAGE_OPTIONS = [
@@ -701,7 +702,6 @@ class CNMFVizContainer:
 
         self._image_widget: fpl.ImageWidget = None
 
-        # self._synchronizer = fpl.Synchronizer(key_bind=None)
         self._time_store = TimeStore()
 
         self._contour_graphics: List[fpl.LineCollection] = list()
@@ -1306,7 +1306,6 @@ class CNMFDataFrameVizExtension:
             input_movie_kwargs=input_movie_kwargs,
             image_widget_kwargs=image_widget_kwargs,
             data_grid_kwargs=data_grid_kwargs,
-
         )
 
         return container

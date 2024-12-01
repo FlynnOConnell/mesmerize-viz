@@ -11,7 +11,7 @@ MARGIN: float = 1
 # TODO: need to make a method for automatic MARGIN setting based on the data
 
 
-class StoreComponent:
+class Component:
     @property
     def subscriber(self) -> ImageGraphic | IntSlider | FloatSlider | LinearSelector | BoundedIntText:
         return self._subscriber
@@ -29,7 +29,6 @@ class StoreComponent:
             if not hasattr(data, 'shape'):
                 raise ValueError("If passing in `ImageGraphic` must provide associated `ndarray` object to update " "data with.")
             self._data = data
-        self._data_filter = data_filter
 
 
 class ComponentStore:
@@ -42,18 +41,14 @@ class ComponentStore:
         self._current_index = int(value)
 
     @property
-    def store(self) -> List[StoreComponent]:
+    def store(self) -> List[Component]:
         return self._store
 
     def __init__(self):
         self._store = list()
         self._current_index = 0
 
-    def subscribe(self,
-                  subscriber: ImageWidget | ImageGraphic | LinearSelector | ScatterGraphic | IntSlider | FloatSlider,
-                  data: np.ndarray = None,
-                  data_filter: callable = None,
-                  multiplier: int | float = None) -> None:
+    def subscribe(self, subscriber: ImageWidget | ImageGraphic | LinearSelector | ScatterGraphic | IntSlider | FloatSlider, data: np.ndarray = None) -> None:
         """
         Method for adding a subscriber to the store to be synchronized.
 
@@ -65,7 +60,7 @@ class ComponentStore:
             If subscriber is a fastplotlib.ImageGraphic, must have an associating numpy.ndarray to update data with.
         """
         # create a TimeStoreComponent
-        component = ComponentStore(subscriber=subscriber)
+        component = Component(subscriber=subscriber, data=data)
 
         # add component to the store
         self._store.append(component)

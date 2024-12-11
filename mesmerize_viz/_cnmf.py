@@ -1060,6 +1060,7 @@ class CNMFVizContainer:
                 color = get_cmap(cmap)[0]  # set using first color in cmap
                 subplot["contours"][:].colors = color
             else:
+                # change to cmap_transform when fpl pr #663 is merged
                 subplot["contours"].cmap_values = classifier
                 subplot["contours"].cmap = cmap
 

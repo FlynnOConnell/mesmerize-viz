@@ -119,7 +119,7 @@ class TimeStore:
                 self.store.remove(component)
                 # remove event handler
                 if isinstance(component, (IntSlider, FloatSlider)):
-                    component.unobserve(self._update_store)
+                    component.subscriber.unobserve(self._update_store)
                 if isinstance(component, LinearSelector):
                     component.subscriber.remove_event_handler(self._update_store, "selection")
 

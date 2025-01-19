@@ -1,14 +1,167 @@
 from typing import *
 import numpy as np
-from fastplotlib import ImageGraphic, LinearSelector, ScatterGraphic, ImageWidget
-from ipywidgets import IntSlider, FloatSlider
+import pygfx
+from pygfx import PointerEvent
 
+from fastplotlib import ImageGraphic, LinearSelector, ScatterGraphic, ImageWidget, LineCollection, Figure
+from ipywidgets import IntSlider, FloatSlider, BoundedIntText
+
+from fastplotlib.graphics._collection_base import CollectionFeature
 from fastplotlib.graphics._features import FeatureEvent
+from fastplotlib.layouts._subplot import Subplot
+from fastplotlib.utils import get_nearest_graphics_indices
 
 MARGIN: float = 1
 
-
 # TODO: need to make a method for automatic MARGIN setting based on the data
+
+class NeuronStoreComponent:
+
+    @property
+    def subscriber(self) -> LineCollection | LinearSelector | BoundedIntText | Figure:
+        return self._subscriber
+
+    def __init__(self, subscriber, data=None):
+        """A Collection component of the collection store."""
+        self._subscriber = subscriber
+        self._data = data
+
+        # If given a subpot, make sure it has a collection to manage
+        if isinstance(self.subscriber, Subplot):
+            # hacky
+            for graphic in self.subscriber.graphics:
+                if isinstance(graphic, LineCollection):
+                    name = graphic.name
+                    self._data = self.subscriber[name]
+
+    @property
+    def data(self) -> np.ndarray | CollectionFeature:
+        return self._data
+
+
+class NeuronStore:
+    @property
+    def current_index(self):
+        """Currently selected graphic."""
+        return self._current_index
+
+    @current_index.setter
+    def current_index(self, value: int):
+        """Set the current neuron index."""
+        self._current_index = int(value)
+
+    @property
+    def store(self) -> List[NeuronStoreComponent]:
+        """Returns the items in the store."""
+        return self._store
+
+    def __init__(self):
+        """
+        TimeStore for synchronizes and updating components of a plot (i.e. Ipywidgets.IntSlider,
+        fastplotlib.LinearSelector, or fastplotlob.ImageGraphic).
+
+        NOTE: If passing a `fastplotlib.ImageGraphic`, it is understood that there should be an associated
+        `ndarray` given.
+        """
+        # initialize store
+        self._store = list()
+        # by default, current_index is zero
+        self._current_index = 0
+
+    def subscribe(self, subscriber: LineCollection | LinearSelector | BoundedIntText | IntSlider | ImageGraphic) -> None:
+        """
+        Method for adding a subscriber to the store to be synchronized.
+
+        Parameters
+        ----------
+        subscriber: fastplotlib.ImageGraphic, fastplotlib.LinearSelector, ipywidgets.IntSlider, or ipywidgets.FloatSlider
+            ipywidget or fastplotlib object to be synchronized
+        """
+        # create a TimeStoreComponent
+        component = NeuronStoreComponent(subscriber=subscriber)
+
+        # add component to the store
+        self._store.append(component)
+        if isinstance(subscriber, Subplot):
+            for g in subscriber.graphics:
+                g.add_event_handler(self._update_store, "click")
+        if isinstance(subscriber, ImageGraphic):
+            component.subscriber.add_event_handler(self._update_store, "click")
+        if isinstance(component.subscriber, LineCollection | LinearSelector):
+            print('Adding subscriber to linear collection')
+            component.subscriber.add_event_handler(self._update_store, "click")
+        elif isinstance(component.subscriber, BoundedIntText | IntSlider):
+            component.subscriber.observe(self._update_store, "value")
+
+    def unsubscribe(self, subscriber):
+        """Remove a subscriber from the store."""
+        for component in self.store:
+            if component.subscriber == subscriber:
+                #  remove the component from the store
+                self.store.remove(component)
+                # remove event handler
+                if isinstance(component, ImageGraphic, Subplot):
+                    component.subscriber.remove_event_handler(self._update_store, "click")
+                if isinstance(component, LineCollection | LinearSelector):
+                    component.subscriber.remove_event_handler(self._update_store, "selection")
+                if isinstance(component, BoundedIntText | IntSlider):
+                    component.subcriber.unobserve(self._update_store)
+
+    def _update_store(self, ev):
+        """Called when event occurs and store needs to be updated."""
+        if isinstance(ev, pygfx.PointerEvent):
+            # an image graphic or contour was selected on the screen
+            # first, set current_index from the pointer event on the graphic
+            index_updated = False
+            for component in self.store:
+                # why does linter complain about ev.graphic?
+                # hacky
+                if hasattr(component.subscriber, "graphics"):
+                    if ev.graphic == component.subscriber.graphics[0]:
+                        xy = component.subscriber.map_screen_to_world(ev)[:-1]
+                        nearest_idx = get_nearest_graphics_indices(xy, component.data)[0]
+                        self.current_index = nearest_idx
+                        index_updated = True
+            # make sure we found a store component with a viewport in the pointer event
+            if not index_updated:
+                raise ValueError("No graphics match the selected graphic.")
+
+            # propegate current_index to store items
+            for component in self.store:
+                if isinstance(component.subscriber, Subplot):
+                    component.data[self.current_index].colors = "w"
+                    component.data[self.current_index].thickness = 8
+        else: # non-pygfx PointerEvent
+            for component in self.store:
+                if isinstance(component.subscriber, Subplot):
+                    component.data[self.current_index].colors = "w"
+                    component.data[self.current_index].thickness = 8
+
+                    # returning all other indices to the original color/thickness as well?
+                    # or storing the previously selected index and restoring just that value?
+                    mask = np.ones_like(component.data.thickness, dtype=bool)
+                    mask[self.current_index] = False
+                    component.data.thickness[mask] = 4
+
+                if isinstance(component, LinearSelector):
+                    # only update if different
+                    component.subscriber.selection = self.current_index
+
+
+    def _find_selected_graphic(self, pointer_event: pygfx.PointerEvent):
+        for i, component in enumerate(self.store):
+            print("iter store")
+            if hasattr(component.subscriber, "map_screen_to_world"):
+                print("has attr")
+                xy = component.subscriber.map_screen_to_world(pointer_event)
+                if xy is None:
+                    # pointer event not in this subplots viewport
+                    continue
+                nearest_idx = get_nearest_graphics_indices(xy[:-1], component.data)[0]
+                self.current_index = nearest_idx
+            else:
+                print(f"sub {component.subscriber} has no attr, skipping")
+
 
 
 class TimeStoreComponent:
@@ -118,10 +271,8 @@ class TimeStore:
                 #  remove the component from the store
                 self.store.remove(component)
                 # remove event handler
-                if isinstance(component, (IntSlider, FloatSlider)):
+                if isinstance(component, (IntSlider)):
                     component.subscriber.unobserve(self._update_store)
-                if isinstance(component, LinearSelector):
-                    component.subscriber.remove_event_handler(self._update_store, "selection")
 
     def _update_store(self, ev):
         """Called when event occurs and store needs to be updated."""
@@ -164,7 +315,7 @@ class TimeStore:
                     print('Is LinearSelector and abs(component.subscriber.selection - (self.time * '
                           'component.multiplier)) > MARGIN')
                     component.subscriber.selection = self.time * component.multiplier
-            else:
-                # only update if different
-                if abs(component.subscriber.value - self.time) > MARGIN:
-                    component.subscriber.value = self.time
+                else:
+                    # only update if different
+                    if abs(component.subscriber.value - self.time) > MARGIN:
+                        component.subscriber.value = self.time

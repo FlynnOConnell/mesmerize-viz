@@ -17,7 +17,7 @@ from sidecar import Sidecar
 
 from mesmerize_core.caiman_extensions.cnmf import cnmf_cache
 from mesmerize_core import CNMFExtensions
-from ._store_model import TimeStore
+from ._store_model import TimeStore, NeuronStore
 
 from ._utils import DummyMovie, format_params
 
@@ -606,15 +606,19 @@ class CNMFVizContainer:
         # callback when row changed
         self.datagrid.observe(self._row_changed, names="selections")
 
+        # self._synchronizer = fpl.Synchronizer(key_bind=None)
+        self._time_store = TimeStore()
+        self._neuron_store = NeuronStore()
+
         # ipywidgets for selecting components
         self.component_slider = IntSlider(min=0, max=1, value=0, step=1, description="component index:")
         self.component_int_box = BoundedIntText(min=0, max=1, value=0, step=1, layout=Layout(width="100px"))
+        self._neuron_store.subscribe(self.component_int_box)
+
         for trait in ["value", "max"]:
             jslink((self.component_slider, trait), (self.component_int_box, trait))
 
-        self.component_int_box.observe(
-            lambda change: self.set_component_index(change["new"]), "value"
-        )
+        self.component_int_box.observe(lambda change: self.set_component_index(change["new"]), "value")
 
         self._component_metrics_text = Text(
             value="",
@@ -645,6 +649,7 @@ class CNMFVizContainer:
             description_tooltip="zoom scale as a factor of component width/height"
         )
         # organize these widgets to be shown at the top
+        # TODO: ImGui option for this
         self._top_widget = VBox([
             HBox([self.datagrid, self.params_text_area]),
             HBox([self.component_slider, self.component_int_box, self._component_metrics_text]),
@@ -700,9 +705,6 @@ class CNMFVizContainer:
         self._plot_heatmap[0, 0].camera.maintain_aspect = False
 
         self._image_widget: fpl.ImageWidget = None
-
-        # self._synchronizer = fpl.Synchronizer(key_bind=None)
-        self._time_store = TimeStore()
 
         self._contour_graphics: List[fpl.LineCollection] = list()
 
@@ -830,6 +832,7 @@ class CNMFVizContainer:
         self._component_linear_selector: fpl.LinearSelector = self._plot_heatmap[0, 0]['heatmap'].add_linear_selector(
             axis="y", thickness=5)
         self._component_linear_selector.add_event_handler(self.set_component_index, "selection")
+        # self._neuron_store.subscribe(self._component_linear_selector)
 
         # linear selectors and events
         self._linear_selector_temporal: fpl.LinearSelector = self._plot_temporal[0, 0]["line"].add_linear_selector()
@@ -844,7 +847,9 @@ class CNMFVizContainer:
                 names=self._image_data_options,
                 **self.image_widget_kwargs
             )
-            self._time_store.subscribe(self._image_widget, )
+            self._time_store.subscribe(self._image_widget,)
+            # for g in self._image_widget.managed_graphics:
+            #     self._neuron_store.subscribe(g)
 
             # need to start it here so that we can access the toolbar to link events with the slider
             self._image_widget.show()
@@ -864,7 +869,7 @@ class CNMFVizContainer:
                 if "contours" in subplot:
                     # delete the contour graphics
                     subplot.delete_graphic(subplot["contours"])
-
+                    # self._store.unsubscribe()
 
         contours = data_arrays["contours"][0]
 
@@ -880,9 +885,9 @@ class CNMFVizContainer:
             )
             self._contour_graphics.append(contour_graphic)
 
-            # WIP
-            image_graphic = subplot["image_widget_managed"]
-            contour_graphic.add_event_handler(self.click_event, "click")
+        # # add subplots to neuron_store after adding the line_collections
+        # for subplot in self._image_widget.figure:
+        #     self._neuron_store.subscribe(subplot)
 
         self.component_int_box.value = 0
         self.component_slider.value = 0
@@ -895,35 +900,6 @@ class CNMFVizContainer:
 
         self._eval_controller.set_limits(self._cnmf_obj)
 
-    def click_event(self, ev):
-        # TODO: Click event should be relative to the clicked image, not the contour
-        for subplot in self._image_widget.figure:
-            contour = subplot["contours"]
-            xy = subplot.map_screen_to_world(ev)[:-1]
-            nearest = fpl.utils.get_nearest_graphics(xy, contour)[0]
-            nearest.colors = "w"
-
-    def _euclidean(self, target, event,):
-        """maps click events to contour"""
-        # calculate coms of line collection
-        ix = event.get_selected_index()
-        indices = np.array(event.info["index"])
-
-        coms = list()
-
-        for contour in target.graphics:
-            coors = contour.data()[~np.isnan(contour.data()).any(axis=1)]
-            com = coors.mean(axis=0)
-            coms.append(com)
-
-        # euclidean distance to find closest index of com
-        indices = np.append(indices, [0])
-
-        ix = int(np.linalg.norm((coms - indices), axis=1).argsort()[0])
-
-        self.set_component_index(ix)
-
-        return None
 
     def set_component_index(self, index):
         if hasattr(index, "info"):
@@ -936,10 +912,12 @@ class CNMFVizContainer:
 
         for g in self._contour_graphics:
             g.thickness[index] = 8
+
         self._plot_temporal[0, 0]["line"].data[:, 1] = self._temporal_data[index]
 
         # set the component index property
         self._component_index = index
+        # self._store.current_index = index
 
         if self._component_linear_selector._move_info is None:
             # TODO: Very hacky for now, ignores if the slider is currently being moved by the user
@@ -971,7 +949,7 @@ class CNMFVizContainer:
             )
 
     def _center_on_component(self, obj):
-        self._zoom_into_component(self.component_index)
+        self._zoom_into_component(self._neuron_store.current_index)
 
     def _ipywidget_set_component_colors(self, *args):
         """just a wrapper to make ipywidgets happy"""
@@ -1180,7 +1158,7 @@ class CNMFVizContainer:
 
         """
 
-        if self.image_widget.figure.canvas.__class__.__name__ == "JupyterWgpuCanvas":
+        if self.image_widget.figure.canvas.__class__.__name__ in ["JupyterWgpuCanvas", "JupyterRenderCanvas"]:
             temporals = VBox([self._plot_temporal.show(), self._plot_heatmap.show()])
             plots = HBox([temporals, self._image_widget.show()])
             self._widget = VBox([self._top_widget, plots, self._tab_contours_eval])
@@ -1191,7 +1169,7 @@ class CNMFVizContainer:
             else:
                 return self._widget
 
-        elif self.image_widget.figure.canvas.__class__.__name__ == "QWgpuCanvas":
+        elif self.image_widget.figure.canvas.__class__.__name__ in ["QWgpuCanvas", "QRenderCanvas"]:
             self.plot_temporal.show()
             self.plot_heatmap.show()
             self.image_widget.show()

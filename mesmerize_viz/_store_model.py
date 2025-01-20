@@ -42,13 +42,22 @@ class NeuronStoreComponent:
 class NeuronStore:
     @property
     def current_index(self):
-        """Currently selected graphic."""
+        """Index of the currently selected graphic."""
         return self._current_index
 
     @current_index.setter
     def current_index(self, value: int):
-        """Set the current neuron index."""
+        """Store the previous index and set the current neuron index."""
+        self.previous_index = self._current_index
         self._current_index = int(value)
+
+    @property
+    def previous_index(self):
+        return self._previous_index
+
+    @previous_index.setter
+    def previous_index(self, value: int):
+        self._previous_index = value
 
     @property
     def store(self) -> List[NeuronStoreComponent]:
@@ -66,9 +75,12 @@ class NeuronStore:
         # initialize store
         self._store = list()
         # by default, current_index is zero
-        self._current_index = 0
+        self._current_index = None
+        self._previous_index = None
+        # store the previous color to reset when a new neuron is selected
+        self._prev_color = None
 
-    def subscribe(self, subscriber: LineCollection | LinearSelector | BoundedIntText | IntSlider | ImageGraphic) -> None:
+    def subscribe(self, subscriber: Subplot | LineCollection | LinearSelector | BoundedIntText | IntSlider) -> None:
         """
         Method for adding a subscriber to the store to be synchronized.
 
@@ -85,10 +97,7 @@ class NeuronStore:
         if isinstance(subscriber, Subplot):
             for g in subscriber.graphics:
                 g.add_event_handler(self._update_store, "click")
-        if isinstance(subscriber, ImageGraphic):
-            component.subscriber.add_event_handler(self._update_store, "click")
         if isinstance(component.subscriber, LineCollection | LinearSelector):
-            print('Adding subscriber to linear collection')
             component.subscriber.add_event_handler(self._update_store, "click")
         elif isinstance(component.subscriber, BoundedIntText | IntSlider):
             component.subscriber.observe(self._update_store, "value")
@@ -129,18 +138,15 @@ class NeuronStore:
             # propegate current_index to store items
             for component in self.store:
                 if isinstance(component.subscriber, Subplot):
+                    component.data[self.current_index].thickness = 8
+                    self._prev_color = component.data.colors[self.current_index]
+                    component.data.colors[self.current_index] = "w"
 
-                    # reset values
-                    component.data.thickness[:] = 2.0
-                    component.data.thickness[self.current_index] = 4.0
-
-                    component.data[self.current_index].colors = "w"
-                    component.data[self.current_index].thickness = 8.0
-
-                    # returning all other indices to the original color/thickness as well?
-                    # or storing the previously selected index and restoring just that value?
-                    component.data[np.arange(component.data.thickness.size) != self.current_index].thickness = 2
-                    component.data[np.arange(component.data.thickness.size) != self.current_index].colors = 'gray'
+                    if self.previous_index is not None:
+                        component.data[self.previous_index].thickness = 2
+                        print(f"{component.data.colors[self.previous_index].shape}")
+                        # component.data.colors[self.previous_index] = self._prev_color
+                        self._prev_color = component.data.colors[self.current_index]
 
                 elif isinstance(component.subscriber, LinearSelector):
                    pass

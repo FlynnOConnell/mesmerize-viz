@@ -886,8 +886,9 @@ class CNMFVizContainer:
             self._contour_graphics.append(contour_graphic)
 
         # # add subplots to neuron_store after adding the line_collections
-        # for subplot in self._image_widget.figure:
-        #     self._neuron_store.subscribe(subplot)
+        # the neuron store will add event handlers to each managed graphic
+        for subplot in self._image_widget.figure:
+            self._neuron_store.subscribe(subplot)
 
         self.component_int_box.value = 0
         self.component_slider.value = 0

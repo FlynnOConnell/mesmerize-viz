@@ -52,6 +52,14 @@ class NeuronStore:
         self._current_index = int(value)
 
     @property
+    def previous_color(self):
+        return self._previous_color
+
+    @previous_color.setter
+    def previous_color(self, value: int):
+        self._previous_index = value
+
+    @property
     def previous_index(self):
         return self._previous_index
 
@@ -78,7 +86,7 @@ class NeuronStore:
         self._current_index = None
         self._previous_index = None
         # store the previous color to reset when a new neuron is selected
-        self._prev_color = None
+        self._previous_color = None
 
     def subscribe(self, subscriber: Subplot | LineCollection | LinearSelector | BoundedIntText | IntSlider) -> None:
         """
@@ -139,14 +147,12 @@ class NeuronStore:
             for component in self.store:
                 if isinstance(component.subscriber, Subplot):
                     component.data[self.current_index].thickness = 8
-                    self._prev_color = component.data.colors[self.current_index]
-                    component.data.colors[self.current_index] = "w"
+                    self._previous_color = component.data[self.current_index].colors
+                    component.data[self.current_index].colors = "w"
 
                     if self.previous_index is not None:
                         component.data[self.previous_index].thickness = 2
-                        print(f"{component.data.colors[self.previous_index].shape}")
-                        # component.data.colors[self.previous_index] = self._prev_color
-                        self._prev_color = component.data.colors[self.current_index]
+                        component.data[self.previous_index].colors = self._previous_color
 
                 elif isinstance(component.subscriber, LinearSelector):
                    pass
@@ -166,22 +172,6 @@ class NeuronStore:
                 if isinstance(component, LinearSelector):
                     # only update if different
                     component.subscriber.selection = self.current_index
-
-
-    def _find_selected_graphic(self, pointer_event: pygfx.PointerEvent):
-        for i, component in enumerate(self.store):
-            print("iter store")
-            if hasattr(component.subscriber, "map_screen_to_world"):
-                print("has attr")
-                xy = component.subscriber.map_screen_to_world(pointer_event)
-                if xy is None:
-                    # pointer event not in this subplots viewport
-                    continue
-                nearest_idx = get_nearest_graphics_indices(xy[:-1], component.data)[0]
-                self.current_index = nearest_idx
-            else:
-                print(f"sub {component.subscriber} has no attr, skipping")
-
 
 
 class TimeStoreComponent:

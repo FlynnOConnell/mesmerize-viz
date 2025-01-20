@@ -147,7 +147,7 @@ class NeuronStore:
             for component in self.store:
                 if isinstance(component.subscriber, Subplot):
                     component.data[self.current_index].thickness = 8
-                    self._previous_color = component.data[self.current_index].colors
+                    self._previous_color = component.data[self.current_index].colors.value
                     component.data[self.current_index].colors = "w"
 
                     if self.previous_index is not None:

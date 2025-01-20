@@ -129,8 +129,22 @@ class NeuronStore:
             # propegate current_index to store items
             for component in self.store:
                 if isinstance(component.subscriber, Subplot):
+
+                    # reset values
+                    component.data.thickness[:] = 2.0
+                    component.data.thickness[self.current_index] = 4.0
+
                     component.data[self.current_index].colors = "w"
-                    component.data[self.current_index].thickness = 8
+                    component.data[self.current_index].thickness = 8.0
+
+                    # returning all other indices to the original color/thickness as well?
+                    # or storing the previously selected index and restoring just that value?
+                    component.data[np.arange(component.data.thickness.size) != self.current_index].thickness = 2
+                    component.data[np.arange(component.data.thickness.size) != self.current_index].colors = 'gray'
+
+                elif isinstance(component.subscriber, LinearSelector):
+                   pass
+                    # component.data[self.current_index].colors = "w"
         else: # non-pygfx PointerEvent
             for component in self.store:
                 if isinstance(component.subscriber, Subplot):

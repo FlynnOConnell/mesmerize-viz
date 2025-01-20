@@ -911,8 +911,8 @@ class CNMFVizContainer:
             #     return
             index = int(index.info["value"])
 
-        for g in self._contour_graphics:
-            g.thickness[index] = 8
+        # for g in self._contour_graphics:
+        #     g.thickness[index] = 8
 
         self._plot_temporal[0, 0]["line"].data[:, 1] = self._temporal_data[index]
 

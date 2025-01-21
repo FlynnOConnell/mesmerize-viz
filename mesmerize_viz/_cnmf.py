@@ -706,10 +706,6 @@ class CNMFVizContainer:
 
         self._image_widget: fpl.ImageWidget = None
 
-        self._contour_graphics: List[fpl.LineCollection] = list()
-
-        self._component_index = 0
-
         self._cnmf_obj: CNMF = None
 
         data_arrays = self._get_row_data(index=start_index)
@@ -814,7 +810,6 @@ class CNMFVizContainer:
             self.current_row = index
 
     def _set_data(self, data_arrays: Dict[str, np.ndarray]):
-        self._contour_graphics.clear()
 
         self._plot_temporal.clear()
         self._plot_heatmap.clear()
@@ -831,8 +826,7 @@ class CNMFVizContainer:
         # component selectors
         self._component_linear_selector: fpl.LinearSelector = self._plot_heatmap[0, 0]['heatmap'].add_linear_selector(
             axis="y", thickness=5)
-        self._component_linear_selector.add_event_handler(self.set_component_index, "selection")
-        # self._neuron_store.subscribe(self._component_linear_selector)
+        self._neuron_store.subscribe(self._component_linear_selector)
 
         # linear selectors and events
         self._linear_selector_temporal: fpl.LinearSelector = self._plot_temporal[0, 0]["line"].add_linear_selector()
@@ -878,16 +872,14 @@ class CNMFVizContainer:
         self._random_colors[:, -1] = 1
 
         for subplot in self._image_widget.figure:
-            contour_graphic = subplot.add_line_collection(
+            subplot.add_line_collection(
                 contours,
                 colors=self._random_colors,
                 name="contours"
             )
-            self._contour_graphics.append(contour_graphic)
-
-        # # add subplots to neuron_store after adding the line_collections
-        # the neuron store will add event handlers to each managed graphic
-        for subplot in self._image_widget.figure:
+            # # add subplots to neuron_store after adding the line_collections
+            # the neuron store will add event handlers to each managed graphic
+            # self._contour_graphics.append(contour_graphic)
             self._neuron_store.subscribe(subplot)
 
         self.component_int_box.value = 0
@@ -903,16 +895,6 @@ class CNMFVizContainer:
 
 
     def set_component_index(self, index):
-        if hasattr(index, "info"):
-            # came from heatmap component selector
-            # if index.info["pygfx_event"] is None:
-            #     # this means that the selector was not triggered by the user but that it moved due to another event
-            #     # so then we don't set_component_index because then infinite recursion
-            #     return
-            index = int(index.info["value"])
-
-        # for g in self._contour_graphics:
-        #     g.thickness[index] = 8
 
         self._plot_temporal[0, 0]["line"].data[:, 1] = self._temporal_data[index]
 

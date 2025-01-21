@@ -1,3 +1,4 @@
+from multiprocessing.managers import Value
 from typing import *
 import numpy as np
 import pygfx
@@ -106,7 +107,7 @@ class NeuronStore:
             for g in subscriber.graphics:
                 g.add_event_handler(self._update_store, "click")
         if isinstance(component.subscriber, LineCollection | LinearSelector):
-            component.subscriber.add_event_handler(self._update_store, "click")
+            component.subscriber.add_event_handler(self._update_store, "selection")
         elif isinstance(component.subscriber, BoundedIntText | IntSlider):
             component.subscriber.observe(self._update_store, "value")
 
@@ -126,6 +127,7 @@ class NeuronStore:
 
     def _update_store(self, ev):
         """Called when event occurs and store needs to be updated."""
+        # First, parse event to set index
         if isinstance(ev, pygfx.PointerEvent):
             # an image graphic or contour was selected on the screen
             # first, set current_index from the pointer event on the graphic
@@ -139,37 +141,33 @@ class NeuronStore:
                         nearest_idx = get_nearest_graphics_indices(xy, component.data)[0]
                         self.current_index = nearest_idx
                         index_updated = True
-            # make sure we found a store component with a viewport in the pointer event
             if not index_updated:
-                raise ValueError("No graphics match the selected graphic.")
+                raise ValueError(f"No graphic found matching the event {ev}")
+        elif isinstance(ev, FeatureEvent):
+            # came from heatmap component selector
+            if hasattr(ev, "pick_Info"):
+                if ev.info["pygfx_event"] is None:
+                    # this means that the selector was not triggered by the user but that it moved due to another event
+                    # so then we don't set_component_index because then infinite recursion
+                    return
+            index = int(ev.info["value"])
+            self.current_index = index
+        else:
+            print(ev)
+            raise TypeError(f"Unknown event: {ev}")
 
-            # propegate current_index to store items
-            for component in self.store:
-                if isinstance(component.subscriber, Subplot):
-                    component.data[self.current_index].thickness = 8
-                    # self._previous_color = component.data[self.current_index].colors
-                    # component.data[self.current_index].colors = "w"
+        # update each subscriber's data with the new index
+        for component in self.store:
+            if isinstance(component.subscriber, Subplot):
+                component.data[self.current_index].thickness = 8
+                # self._previous_color = component.data[self.current_index].colors
+                # component.data[self.current_index].colors = "w"
 
-                    if self.previous_index is not None:
-                        component.data[self.previous_index].thickness = 2
-                        # component.data[self.previous_index].colors = self._previous_color
-                elif isinstance(component.subscriber, LinearSelector):
-                    component.subscriber.value = self.current_index
-        else: # non-pygfx PointerEvent
-            for component in self.store:
-                if isinstance(component.subscriber, Subplot):
-                    component.data[self.current_index].colors = "w"
-                    component.data[self.current_index].thickness = 8
-
-                    # returning all other indices to the original color/thickness as well?
-                    # or storing the previously selected index and restoring just that value?
-                    mask = np.ones_like(component.data.thickness, dtype=bool)
-                    mask[self.current_index] = False
-                    component.data.thickness[mask] = 4
-
-                if isinstance(component, LinearSelector):
-                    # only update if different
-                    component.subscriber.selection = self.current_index
+                if self.previous_index is not None:
+                    component.data[self.previous_index].thickness = 2
+                    # component.data[self.previous_index].colors = self._previous_color
+            elif isinstance(component.subscriber, LinearSelector):
+                component.subscriber.value = self.current_index
 
 
 class TimeStoreComponent:

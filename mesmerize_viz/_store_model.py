@@ -171,10 +171,7 @@ class NeuronStore:
                         component.data[self.previous_index].thickness = 2
                         # component.data[self.previous_index].colors = self._previous_color
                 elif component.data is not None:
-                    try:
-                        component.subscriber.graphics[0].data[:, 1] = component.data[self.current_index]
-                    except Exception as e:
-                        print(f"{e}")
+                    component.subscriber.graphics[0].data[:, 1] = component.data[self.current_index]
 
             elif isinstance(component.subscriber, LinearSelector):
                 component.subscriber.value = self.current_index

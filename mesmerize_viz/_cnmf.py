@@ -817,6 +817,7 @@ class CNMFVizContainer:
         # make our temporal plots first, else image widget slider events could trigger linear selectors
         self._temporal_data = data_arrays["temporal"]
         self._plot_temporal[0, 0].add_line(self._temporal_data[0], name="line")
+        self._neuron_store.subscribe(self._plot_temporal[0, 0], data=self._temporal_data)
 
         # autoscale the single temporal line plot when the data changes
         self._plot_temporal[0, 0]["line"].add_event_handler(self._plot_temporal[0, 0].auto_scale)
@@ -896,10 +897,10 @@ class CNMFVizContainer:
 
     def set_component_index(self, index):
 
-        self._plot_temporal[0, 0]["line"].data[:, 1] = self._temporal_data[index]
+        # self._plot_temporal[0, 0]["line"].data[:, 1] = self._temporal_data[index]
 
         # set the component index property
-        self._component_index = index
+        # self._component_index = index
         # self._store.current_index = index
 
         if self._component_linear_selector._move_info is None:

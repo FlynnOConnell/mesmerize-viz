@@ -147,12 +147,12 @@ class NeuronStore:
             for component in self.store:
                 if isinstance(component.subscriber, Subplot):
                     component.data[self.current_index].thickness = 8
-                    self._previous_color = component.data[self.current_index].colors.value
-                    component.data[self.current_index].colors = "w"
+                    # self._previous_color = component.data[self.current_index].colors
+                    # component.data[self.current_index].colors = "w"
 
                     if self.previous_index is not None:
                         component.data[self.previous_index].thickness = 2
-                        component.data[self.previous_index].colors = self._previous_color
+                        # component.data[self.previous_index].colors = self._previous_color
 
                 elif isinstance(component.subscriber, LinearSelector):
                    pass
@@ -298,9 +298,7 @@ class TimeStore:
         else:
             self.time = ev["new"]
 
-        print('Iterating components')
         for component in self.store:
-            print('Component 1')
             if isinstance(component.subscriber, ImageWidget):
                 # user moved qslider, don't update imagewidget
                 if isinstance(ev, dict) and 't' in ev:
@@ -322,8 +320,6 @@ class TimeStore:
             elif isinstance(component.subscriber, LinearSelector):
                 # only update if different
                 if abs(component.subscriber.selection - (self.time * component.multiplier)) > MARGIN:
-                    print('Is LinearSelector and abs(component.subscriber.selection - (self.time * '
-                          'component.multiplier)) > MARGIN')
                     component.subscriber.selection = self.time * component.multiplier
                 else:
                     # only update if different

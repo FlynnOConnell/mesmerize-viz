@@ -89,7 +89,9 @@ class NeuronStore:
         # store the previous color to reset when a new neuron is selected
         self._previous_color = None
 
-    def subscribe(self, subscriber: Subplot | LineCollection | LinearSelector | BoundedIntText | IntSlider) -> None:
+    def subscribe(self,
+                  subscriber: Subplot | LineCollection | LinearSelector | BoundedIntText | IntSlider,
+                  data=None) -> None:
         """
         Method for adding a subscriber to the store to be synchronized.
 
@@ -97,9 +99,10 @@ class NeuronStore:
         ----------
         subscriber: fastplotlib.ImageGraphic, fastplotlib.LinearSelector, ipywidgets.IntSlider, or ipywidgets.FloatSlider
             ipywidget or fastplotlib object to be synchronized
+        data: ndarray
         """
         # create a TimeStoreComponent
-        component = NeuronStoreComponent(subscriber=subscriber)
+        component = NeuronStoreComponent(subscriber=subscriber, data=data)
 
         # add component to the store
         self._store.append(component)
@@ -159,13 +162,20 @@ class NeuronStore:
         # update each subscriber's data with the new index
         for component in self.store:
             if isinstance(component.subscriber, Subplot):
-                component.data[self.current_index].thickness = 8
-                # self._previous_color = component.data[self.current_index].colors
-                # component.data[self.current_index].colors = "w"
+                if all(hasattr (component.data, attr) for attr in ["thickness", "colors"]):
+                    component.data[self.current_index].thickness = 8
+                    # self._previous_color = component.data[self.current_index].colors
+                    # component.data[self.current_index].colors = "w"
 
-                if self.previous_index is not None:
-                    component.data[self.previous_index].thickness = 2
-                    # component.data[self.previous_index].colors = self._previous_color
+                    if self.previous_index is not None:
+                        component.data[self.previous_index].thickness = 2
+                        # component.data[self.previous_index].colors = self._previous_color
+                elif component.data is not None:
+                    try:
+                        component.subscriber.graphics[0].data[:, 1] = component.data[self.current_index]
+                    except Exception as e:
+                        print(f"{e}")
+
             elif isinstance(component.subscriber, LinearSelector):
                 component.subscriber.value = self.current_index
 

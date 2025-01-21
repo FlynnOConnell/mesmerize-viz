@@ -153,10 +153,8 @@ class NeuronStore:
                     if self.previous_index is not None:
                         component.data[self.previous_index].thickness = 2
                         # component.data[self.previous_index].colors = self._previous_color
-
                 elif isinstance(component.subscriber, LinearSelector):
-                   pass
-                    # component.data[self.current_index].colors = "w"
+                    component.subscriber.value = self.current_index
         else: # non-pygfx PointerEvent
             for component in self.store:
                 if isinstance(component.subscriber, Subplot):
@@ -323,5 +321,5 @@ class TimeStore:
                     component.subscriber.selection = self.time * component.multiplier
                 else:
                     # only update if different
-                    if abs(component.subscriber.value - self.time) > MARGIN:
-                        component.subscriber.value = self.time
+                    if abs(component.subscriber.selection - self.time) > MARGIN:
+                        component.subscriber.selection = self.time

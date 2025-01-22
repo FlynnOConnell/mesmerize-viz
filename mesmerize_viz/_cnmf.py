@@ -611,12 +611,8 @@ class CNMFVizContainer:
         self._neuron_store = NeuronStore()
 
         # ipywidgets for selecting components
-        self.component_slider = IntSlider(min=0, max=1, value=0, step=1, description="component index:")
         self.component_int_box = BoundedIntText(min=0, max=1, value=0, step=1, layout=Layout(width="100px"))
         self._neuron_store.subscribe(self.component_int_box)
-
-        for trait in ["value", "max"]:
-            jslink((self.component_slider, trait), (self.component_int_box, trait))
 
         self.component_int_box.observe(lambda change: self.set_component_index(change["new"]), "value")
 
@@ -652,7 +648,7 @@ class CNMFVizContainer:
         # TODO: ImGui option for this
         self._top_widget = VBox([
             HBox([self.datagrid, self.params_text_area]),
-            HBox([self.component_slider, self.component_int_box, self._component_metrics_text]),
+            HBox([self.component_int_box, self._component_metrics_text]),
             HBox([self._button_center_component, self.checkbox_zoom_components, self.zoom_components_scale])
         ])
 
@@ -825,8 +821,7 @@ class CNMFVizContainer:
         self._plot_heatmap[0, 0]['heatmap'].add_event_handler(self._plot_heatmap[0, 0].auto_scale)
 
         # component selectors
-        self._component_linear_selector: fpl.LinearSelector = self._plot_heatmap[0, 0]['heatmap'].add_linear_selector(
-            axis="y", thickness=5)
+        self._component_linear_selector: fpl.LinearSelector = self._plot_heatmap[0, 0]['heatmap'].add_linear_selector(axis="y", thickness=5)
         self._neuron_store.subscribe(self._component_linear_selector)
 
         # linear selectors and events
@@ -884,9 +879,7 @@ class CNMFVizContainer:
             self._neuron_store.subscribe(subplot)
 
         self.component_int_box.value = 0
-        self.component_slider.value = 0
         self.component_int_box.max = n_components - 1
-        self.component_slider.max = n_components - 1
 
         # current state of CNMF object
         # this can be different from the one in the dataframe if the user uses eval
@@ -896,17 +889,6 @@ class CNMFVizContainer:
 
 
     def set_component_index(self, index):
-
-        # self._plot_temporal[0, 0]["line"].data[:, 1] = self._temporal_data[index]
-
-        # set the component index property
-        # self._component_index = index
-        # self._store.current_index = index
-
-        if self._component_linear_selector._move_info is None:
-            # TODO: Very hacky for now, ignores if the slider is currently being moved by the user
-            # prevents weird slider movement
-            self._component_linear_selector.selection = index
 
         if self.checkbox_zoom_components.value:
             self._zoom_into_component(index)

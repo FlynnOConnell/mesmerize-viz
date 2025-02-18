@@ -206,14 +206,25 @@ class NeuronStore:
                 component.subscriber.unobserve_all()
                 component.subscriber.value = self.current_index
 
-    
-    def zoom_into_component(self,):
-        for component in self.store:
-            if isinstance(component.subscriber, Subplot):
-                component.subscriber.camera.show_object(
-                    subplot["contours"].graphics[self.current_index].world_object,
-                    scale=self.zoom_scale
-                )
+    def _set_auto_zoom(self, value: bool):
+        self.zoom_flag = value
+        if self.zoom_flag:
+            for component in self.store:
+                if isinstance(component.subscriber, Subplot):
+                    if len(component.subscriber.graphics) > 1:  # contains an image graphic and line-collection
+                        component.subscriber.camera.show_object(
+                            component.subscriber.graphics[1][self.current_index].world_object,
+                            scale=self.zoom_scale
+                        )
+        else:
+            for component in self.store:
+                if isinstance(component.subscriber, Subplot):
+                    component.subscriber.zoom_flag = value
+
+    def _set_zoom_scale(self, value: float):
+        print('called')
+        self.zoom_scale = value
+        self._set_auto_zoom(True)
 
 
 class TimeStoreComponent:

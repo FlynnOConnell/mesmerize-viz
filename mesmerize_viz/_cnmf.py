@@ -606,7 +606,6 @@ class CNMFVizContainer:
         # callback when row changed
         self.datagrid.observe(self._row_changed, names="selections")
 
-        # self._synchronizer = fpl.Synchronizer(key_bind=None)
         self._time_store = TimeStore()
         self._neuron_store = NeuronStore()
 
@@ -631,6 +630,7 @@ class CNMFVizContainer:
             description="auto-zoom component",
             description_tooltip="If checked, zoom into selected component"
         )
+        self.checkbox_zoom_components.observe(self._neuron_store._set_auto_zoom, "value")
         # zoom factor
         self.zoom_components_scale = FloatSlider(
             min=0.25,
@@ -640,8 +640,8 @@ class CNMFVizContainer:
             description="zoom scale",
             description_tooltip="zoom scale as a factor of component width/height"
         )
+        self.zoom_components_scale.observe(self._neuron_store._set_zoom_scale, "value")
         # organize these widgets to be shown at the top
-        # TODO: ImGui option for this
         self._top_widget = VBox([
             HBox([self.datagrid, self.params_text_area]),
             HBox([self.component_int_box, self._component_metrics_text]),
@@ -853,7 +853,6 @@ class CNMFVizContainer:
                 if "contours" in subplot:
                     # delete the contour graphics
                     subplot.delete_graphic(subplot["contours"])
-                    # self._store.unsubscribe()
 
         contours = data_arrays["contours"][0]
 
@@ -898,7 +897,7 @@ class CNMFVizContainer:
         self._component_metrics_text.value = metrics
 
     def _set_zoom_flag(self, value: bool):
-        self._neuron_store.zoom_flag = value
+        self._neuron_store._set_auto_zoom(value)
 
     def _set_zoom_scale(self, scale):
         self._neuron_store.zoom_scale = scale

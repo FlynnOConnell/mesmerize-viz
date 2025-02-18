@@ -1,8 +1,6 @@
-from multiprocessing.managers import Value
 from typing import *
 import numpy as np
 import pygfx
-from pygfx import PointerEvent
 
 from fastplotlib import ImageGraphic, LinearSelector, ScatterGraphic, ImageWidget, LineCollection, Figure
 from ipywidgets import IntSlider, FloatSlider, BoundedIntText
@@ -10,7 +8,7 @@ from ipywidgets import IntSlider, FloatSlider, BoundedIntText
 from fastplotlib.graphics._collection_base import CollectionFeature
 from fastplotlib.graphics._features import FeatureEvent
 from fastplotlib.layouts._subplot import Subplot
-from fastplotlib.utils import get_nearest_graphics_indices
+from ._utils import get_nearest_graphics_indices
 
 MARGIN: float = 1
 

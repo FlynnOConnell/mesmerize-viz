@@ -82,14 +82,14 @@ class NeuronStore:
         self._zoom_scale = value
 
     @property
-    def zoom_flag(self) -> int:
-        """Returns the zoom flag."""
-        return self._zoom_flag
+    def auto_zoom(self) -> int:
+        """  """
+        return self._auto_zoom
 
-    @zoom_flag.setter
-    def zoom_flag(self, value: int):
-        """Sets the zoom flag."""
-        self._zoom_flag = value
+    @auto_zoom.setter
+    def auto_zoom(self, value: int):
+        """  """
+        self._auto_zoom = value
 
 
     def __init__(self):
@@ -107,7 +107,7 @@ class NeuronStore:
         self._previous_index = None
         # store the previous color to reset when a new neuron is selected
         self._previous_color = None
-        self._zoom_flag = False
+        self._auto_zoom = False
         self._zoom_scale = 1
 
     def subscribe(self,
@@ -205,13 +205,13 @@ class NeuronStore:
                 component.subscriber.value = self.current_index
 
     def _set_auto_zoom(self, value: bool):
-        self.zoom_flag = value
-        if self.zoom_flag:
+        self.auto_zoom = value
+        if self.auto_zoom:
             for component in self.store:
                 if isinstance(component.subscriber, Subplot):
                     if len(component.subscriber.graphics) > 1:  # contains an image graphic and line-collection
                         component.subscriber.camera.show_object(
-                            component.subscriber.graphics[1][self.current_index].world_object,
+                            component.subscriber['contours'][self.current_index].world_object,
                             scale=self.zoom_scale
                         )
         else:

@@ -614,8 +614,6 @@ class CNMFVizContainer:
         self.component_int_box = BoundedIntText(min=0, max=1, value=0, step=1, layout=Layout(width="100px"))
         self._neuron_store.subscribe(self.component_int_box)
 
-        self.component_int_box.observe(lambda change: self.set_component_index(change["new"]), "value")
-
         self._component_metrics_text = Text(
             value="",
             placeholder="component metrics",
@@ -624,9 +622,7 @@ class CNMFVizContainer:
             layout=Layout(width="350px")
         )
 
-        self._button_center_component = Button(
-            description="center on component",
-        )
+        self._button_center_component = Button(description="center on component",)
         self._button_center_component.on_click(self._center_on_component)
 
         # checkbox to zoom into components when selected
@@ -838,8 +834,6 @@ class CNMFVizContainer:
                 **self.image_widget_kwargs
             )
             self._time_store.subscribe(self._image_widget,)
-            # for g in self._image_widget.managed_graphics:
-            #     self._neuron_store.subscribe(g)
 
             # need to start it here so that we can access the toolbar to link events with the slider
             self._image_widget.show()
@@ -873,9 +867,6 @@ class CNMFVizContainer:
                 colors=self._random_colors,
                 name="contours"
             )
-            # # add subplots to neuron_store after adding the line_collections
-            # the neuron store will add event handlers to each managed graphic
-            # self._contour_graphics.append(contour_graphic)
             self._neuron_store.subscribe(subplot)
 
         self.component_int_box.value = 0
@@ -886,7 +877,6 @@ class CNMFVizContainer:
         self._cnmf_obj: CNMF = data_arrays["cnmf_obj"]
 
         self._eval_controller.set_limits(self._cnmf_obj)
-
 
     def set_component_index(self, index):
 
@@ -907,15 +897,14 @@ class CNMFVizContainer:
 
         self._component_metrics_text.value = metrics
 
-    def _zoom_into_component(self, index: int):
-        for subplot in self._image_widget.figure:
-            subplot.camera.show_object(
-                subplot["contours"].graphics[index].world_object,
-                scale=self.zoom_components_scale.value
-            )
+    def _set_zoom_flag(self, value: bool):
+        self._neuron_store.zoom_flag = value
+
+    def _set_zoom_scale(self, scale):
+        self._neuron_store.zoom_scale = scale
 
     def _center_on_component(self, obj):
-        self._zoom_into_component(self._neuron_store.current_index)
+        self._neuron_store.zoom_into_component()
 
     def _ipywidget_set_component_colors(self, *args):
         """just a wrapper to make ipywidgets happy"""

@@ -27,13 +27,13 @@ class NeuronStoreComponent:
         self._subscriber = subscriber
         self._data = data
 
-        # If given a subpot, make sure it has a collection to manage
+        # If given a subpot with a line collection, that line collection is the data
         if isinstance(self.subscriber, Subplot):
             # hacky
             for graphic in self.subscriber.graphics:
                 if isinstance(graphic, LineCollection):
-                    name = graphic.name
-                    self._data = self.subscriber[name]
+                    self._data = self.subscriber[graphic.name]
+
 
     @property
     def data(self) -> np.ndarray | CollectionFeature:
@@ -73,9 +73,30 @@ class NeuronStore:
         """Returns the items in the store."""
         return self._store
 
+    @property
+    def zoom_scale(self) -> float:
+        """Returns the zoom scale."""
+        return self._zoom_scale
+
+    @zoom_scale.setter
+    def zoom_scale(self, value: float):
+        """Sets the zoom scale."""
+        self._zoom_scale = value
+
+    @property
+    def zoom_flag(self) -> int:
+        """Returns the zoom flag."""
+        return self._zoom_flag
+
+    @zoom_flag.setter
+    def zoom_flag(self, value: int):
+        """Sets the zoom flag."""
+        self._zoom_flag = value
+
+
     def __init__(self):
         """
-        TimeStore for synchronizes and updating components of a plot (i.e. Ipywidgets.IntSlider,
+        NeuronStore for synchronizes and updating components of a plot (i.e. Ipywidgets.IntSlider,
         fastplotlib.LinearSelector, or fastplotlob.ImageGraphic).
 
         NOTE: If passing a `fastplotlib.ImageGraphic`, it is understood that there should be an associated
@@ -88,6 +109,8 @@ class NeuronStore:
         self._previous_index = None
         # store the previous color to reset when a new neuron is selected
         self._previous_color = None
+        self._zoom_flag = False
+        self._zoom_scale = 1
 
     def subscribe(self,
                   subscriber: Subplot | LineCollection | LinearSelector | BoundedIntText | IntSlider,
@@ -121,11 +144,14 @@ class NeuronStore:
                 #  remove the component from the store
                 self.store.remove(component)
                 # remove event handler
-                if isinstance(component, ImageGraphic, Subplot):
+                if isinstance(component.subscriber, (ImageGraphic, Subplot)):
+                    # does this go here?
+                    # for graphic in component.subscriber.graphics:
+                    #     graphic.registered_callbacks.clear()
                     component.subscriber.remove_event_handler(self._update_store, "click")
-                if isinstance(component, LineCollection | LinearSelector):
+                if isinstance(component.subscriber, LineCollection | LinearSelector):
                     component.subscriber.remove_event_handler(self._update_store, "selection")
-                if isinstance(component, BoundedIntText | IntSlider):
+                if isinstance(component.subscriber, BoundedIntText | IntSlider):
                     component.subcriber.unobserve(self._update_store)
 
     def _update_store(self, ev):
@@ -136,8 +162,7 @@ class NeuronStore:
             # first, set current_index from the pointer event on the graphic
             index_updated = False
             for component in self.store:
-                # why does linter complain about ev.graphic?
-                # hacky
+                # hacky, cant subscribe every line in a line graphic?
                 if hasattr(component.subscriber, "graphics"):
                     if ev.graphic == component.subscriber.graphics[0]:
                         xy = component.subscriber.map_screen_to_world(ev)[:-1]
@@ -145,7 +170,8 @@ class NeuronStore:
                         self.current_index = nearest_idx
                         index_updated = True
             if not index_updated:
-                raise ValueError(f"No graphic found matching the event {ev}")
+                print("Clicking on line graphics is not yet supported.")
+                return
         elif isinstance(ev, FeatureEvent):
             # came from heatmap component selector
             if hasattr(ev, "pick_Info"):
@@ -175,6 +201,19 @@ class NeuronStore:
 
             elif isinstance(component.subscriber, LinearSelector):
                 component.subscriber.value = self.current_index
+
+            elif isinstance(component.subscriber, BoundedIntText | IntSlider):
+                component.subscriber.unobserve_all()
+                component.subscriber.value = self.current_index
+
+    
+    def zoom_into_component(self,):
+        for component in self.store:
+            if isinstance(component.subscriber, Subplot):
+                component.subscriber.camera.show_object(
+                    subplot["contours"].graphics[self.current_index].world_object,
+                    scale=self.zoom_scale
+                )
 
 
 class TimeStoreComponent:
